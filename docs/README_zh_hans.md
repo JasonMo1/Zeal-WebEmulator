@@ -17,39 +17,48 @@
     <a href="https://opensource.org/licenses/Apache-2.0">
         <img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="Licence" />
     </a>
+    <a href="https://github.com/ZT-Pepite/Zeal-WebEmulator/edit/patch-2/docs/README_zh_hans.md">
+  <img alt="bilibili" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.swo.moe%2Fstats%2Fbilibili%2F1042658991&query=count&color=282c34&label=bilibili&labelColor=FE7398&logo=bilibili&logoColor=white&logoSvg=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB2aWV3Qm94PSIwIDAgNTIgNTIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI%2BPHBhdGggZD0iTTEuMzczNTIgMTcuMzUzMjJIOC4xMzUzMjNMMTcuMzUzMjIgMTYuNzUzMjF6IE0yLjEzNTMyIDMuMDAwMDJMMi4xMzUzMjIgMy4wMDAwMnoiLz48L3N2Zz4%3D)"/>
+</a>
+
 </p>
 
 <p align="center">
     <a href="../README.md">English</a> | 简体中文
 </p>
 
-本项目旨在创建Zeal 8位计算机的软件模拟器（Zeal 8位计算机是一台自制的8位计算机，基于Z80 CPU）。
 
-**[点击此处访问在线版模拟器](https://zeal8bit.github.io/Zeal-WebEmulator/)**
 
-## 目的是什么？
+**👏中文介绍———Zeal 8位计算机软件模拟器创建和使用指南👏**
+- **[点击此处访问在线模拟器](https://zeal8bit.github.io/Zeal-WebEmulator/)**
+- [Zeal 8位计算机](https://zeal8bit.com/)是一台自制的8位计算机，基于Z80 CPU。
+- Zeal 8位计算机的[B站频道](https://space.bilibili.com/1042658991)
+- [购买 Zeal 8位计算机](https://www.tindie.com/products/zeal8bit/zeal-8-bit-computer-developer-edition-z80-based/)
+- 中国购买请联系`contact@zeal8bit.com`
+  
+## ✅模拟器的目的是什么？
 
-该项目的目标是实现与真实机器完全相同的模拟，以便可以直接在主机上执行并调试为Zeal 8位计算机编写的程序，而无需手动写入任何EEPROM或NOR闪存。这有助于简化开发和测试流程。
+用该模拟器可以实现与真实机器完全相同的模拟，以便可以直接在主机上执行并调试为Zeal 8位计算机编写的程序，而无需手动写入任何EEPROM或NOR闪存。这有助于简化开发和测试流程。
 
-## 为什么选择创建一个网页模拟器？（使用HTML/CSS/JavaScript）
+## ⭐️为什么选择创建一个网页模拟器？（使用HTML/CSS/JavaScript）
 
-主要目标是将此模拟器集成为 [zeal8bit.com](https://zeal8bit.com)网站中。因此，选择HTML/CSS和Javascript在这方面优势明显。
+主要目标集成模拟器到 [zeal8bit.com](https://zeal8bit.com)网站中。因此，选择HTML/CSS和Javascript在这方面优势明显。
 
-另一方面，还可以让任何人在任何平台（Linux / Windows / Mac OS X）上为Zeal 8位计算机测试或编写程序，而无需安装工具链。
+此外，任何人都可以在任意平台（Linux / Windows / Mac OS X）上为Zeal 8位计算机测试或编写程序，而无需安装工具链。
 
-模拟器已在Opera，Google Chrome和Microsoft Edge上进行了测试。
+模拟器已在Opera，Google Chrome和Microsoft Edge等浏览器上进行了测试。
 
-## 性能如何？
+## 🧐性能如何？
 
-模拟器比实际硬件慢，即使实际硬件使用的是运行频率为 10MHz 的 Z80。这是由于Javascript本身和Web浏览器本身的开销。然而，正如前面提到的，它的主要功能是调试程序，从这个角度来看，它表现得相当不错。
+哪怕Zeal8位计算机上的CPU硬件用的是 10MHz 频率的Z80，模拟器运行速率还是会比实际硬件慢。这是由于Javascript本身和Web浏览器本身的消耗。不过别忘了，模拟器的主要功能是调试程序，从这个角度来看还是相当不错的。
 
 此外，模拟器在时间方面并不是完全准确的，更多详细信息可以在“功能”部分找到。
 
 用 **C语言** （w/ SDL） 编写原生仿真器将会更快，这在计时方面会更准确。但是，这需要一些时间投入。如果您对此类项目感兴趣，请随时与我联系或提供贡献。
 
-## 如何使用模拟器？
+## 🎯如何使用模拟器？
 有几种使用模拟器的方法：
-* 使用模拟器的实时版本：[实时版本的模拟器](https://zeal8bit.github.io/Zeal-WebEmulator/)。您无需安装任何其他东西就可以使用模拟器。
+* 使用在线模拟器：[在线模拟器](https://zeal8bit.github.io/Zeal-WebEmulator/)。您无需安装任何其他东西就可以使用模拟器。
 * 克隆这个存储库，并使用网络浏览器打开 `index.html`（首选 Google Chrome 或 Opera）。
 * 使用 Electron 从此存储库创建一个应用程序。更多详细信息可以在下面找到。
 
@@ -119,7 +128,7 @@ npm run dist-win64
 yarn dist-win64
 ```
 
-## 目前支持的功能
+## ✅目前支持的功能
 
 目前，该模拟器实现了Zeal 8位计算机的以下功能：
 
@@ -143,9 +152,9 @@ yarn dist-win64
 * 在进行分步调试时查看内存内容
 * UART 视图的专用选项卡
 
-## 待办
+## ❗️待办
 
-在模拟器端，要执行的其余任务是：
+模拟器端要执行的其余任务是：
 
 * I2C RTC 设置日期。目前，它始终返回当前浏览器日期，因此写入它不会产生任何改变。
 * 声音支持¹
@@ -157,9 +166,9 @@ yarn dist-win64
 * 调试器按钮的更好界面，带有一些快捷方式
 * 解析断点输入的更好方法。一个已知的错误是，提供以十六进制字母开头的标签将被解释为 PC 值而不是标签。例如，输入 *date_routine* 作为要中断的标签将导致在地址 0xda 处添加断点，而不是标签 *date_routine* 的地址（因为 *date* 以十六进制字母 *da* 开头）
 
-## 为项目做出贡献
+## 👬为项目做出贡献
 
-欢迎贡献者们！任何人都可以为这个项目做出贡献。
+欢迎大家对该项目积极贡献！任何人都可以为这个项目做出贡献。
 
 您可以按照您的意愿修复任何错误，也可以实现待办列表中的功能，或您认为有用或重要的新功能。
 
@@ -188,7 +197,7 @@ Video chip: implement 320x240 text-mode
 It is now possible to switch to 320x240 text-mode and display text.
 ```
 
-## 许可证
+## 📝许可证
 
 `Z80.js` 在MIT licence下取得许可 (源自Molly Howell的存储库：[Z80.js](https://github.com/DrGoldfire/Z80.js))
 
@@ -196,7 +205,7 @@ It is now possible to switch to 320x240 text-mode and display text.
 
 您可以自由地将其用于个人和商业用途，但不得删除每个文件中存在的样板。
 
-# 联系方式
+## 📪联系方式
 
 如有任何建议或要求，您可以通过 `contact@zeal8bit.com`与我联系
 

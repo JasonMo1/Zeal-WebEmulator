@@ -26,8 +26,10 @@
   },
   "license": "Apache",
   "dependencies": {
+    "c8": "^8.0.1",
     "electron-squirrel-startup": "^1.0.0",
-    "opn": "^6.0.0"
+    "opn": "^6.0.0",
+    "qunit": "^2.20.0"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.2.1",
@@ -36,7 +38,7 @@
     "@electron-forge/maker-squirrel": "^6.2.1",
     "@electron-forge/maker-zip": "^6.2.1",
     "@electron-forge/plugin-auto-unpack-natives": "^6.2.1",
-    "electron": "^25.2.0",
+    "electron": "^26.3.0",
     "electron-builder": "^24.6.4",
     "electron-squirrel-startup": "^1.0.0"
   },
@@ -54,7 +56,6 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "installerIcon": "./imgs/installer/zeal.ico",
-      "installerHeader": "./imgs/installer/header.bmp",
       "uninstallerIcon": "./imgs/installer/zeal.ico",
       "perMachine": true,
       "createDesktopShortcut": true,

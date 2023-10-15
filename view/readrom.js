@@ -73,7 +73,7 @@ $("#romadvanced a").click(() => {
 });
 
 function switchToAdvancedMode(error) {
-    popout.error("Could not fetch remote data, switched to advanced mode");
+    popup.error("Could not fetch remote data, switched to advanced mode");
     console.error(error);
     /* Hide advanced link option and ROMs list */
     $("#romload").hide(250, function() {

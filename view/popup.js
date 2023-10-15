@@ -51,5 +51,5 @@ $("#blackbg").click(function() {
  */
 $("footer a").on("click", function(){
     const target = $(this).data("target");
-    popout.doc(target);
+    popup.doc(target);
 });

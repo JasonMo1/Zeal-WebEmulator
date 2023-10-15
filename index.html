@@ -17,16 +17,46 @@
     <!-- jQuery -->
     <script src="component/jquery/jquery-3.6.0.min.js"></script>
     <script src="component/jquery/extend.js"></script>
+    <!-- JsStore -->
+    <script src="component/jsstore/jsstore.min.js"></script>
+    <script src="component/jsstore/jsstore.worker.min.js"></script>
     <!-- Xterm -->
     <script src="component/xterm/xterm.js"></script>
     <link rel="stylesheet" href="component/xterm/xterm.css" />
-    <!-- Hash value -->
+    <!-- Crypto.js -->
     <script src="component/crypto/sha256.js"></script>
     <!-- Disassembler-related -->
     <script src="component/disassembler/disassembler.js"></script>
     <script src="component/disassembler/opcodes_cb.js"></script>
     <script src="component/disassembler/opcodes_ed.js"></script>
     <script src="component/disassembler/opcodes_ixiy.js"></script>
+    <!-- Assembler-related -->
+    <!-- <script src="component/assembler/asm.js"></script>
+    <script src="component/assembler/assembler.js"></script> -->
+    <script src="component/assembler.next/assembler.js"></script>
+    <!-- Codemirror -->
+    <!-- main -->
+    <script src="component/codemirror/lib/codemirror.js"></script>
+    <link rel="stylesheet" href="component/codemirror/lib/codemirror.css"/>
+    <!-- highlight -->
+    <script src="component/codemirror/mode/z80/z80.js"></script>
+    <script src="component/codemirror/mode/clike/clike.js"></script>
+    <!-- darcula stylesheet -->
+    <link rel="stylesheet" href="component/codemirror/theme/darcula.css">
+    <!-- runmode -->
+    <script src="component/codemirror/addon/runmode/runmode.js"></script>
+    <!-- fold -->
+    <link rel="stylesheet" href="component/codemirror/addon/fold/foldgutter.css"/>
+    <script src="component/codemirror/addon/fold/foldcode.js"></script>
+    <script src="component/codemirror/addon/fold/foldgutter.js"></script>
+    <script src="component/codemirror/addon/fold/brace-fold.js"></script>
+    <script src="component/codemirror/addon/fold/comment-fold.js"></script>
+    <!-- match brackets -->
+    <script src="component/codemirror/addon/edit/matchbrackets.js"></script>
+    <!-- auto hint -->
+    <link rel="stylesheet" href="component/codemirror/addon/hint/show-hint.css">
+    <script src="component/codemirror/addon/hint/show-hint.js"></script>
+    <script src="component/codemirror/addon/hint/anyword-hint.js"></script>
   </head>
 
   <body>
@@ -229,7 +259,8 @@
         </section>
 
         <div id="container">
-        <canvas id="screen" tabindex="1" style="outline: none;"></canvas>
+          <canvas id="screen" tabindex="1" style="outline: none;"></canvas>
+          <input id="input-container">
         </div>
 
         <section id="rightpanel">
@@ -278,6 +309,7 @@
         <div class="tab">Disassemble</div>
         <div id="memory-tab" class="tab">Memory view</div>
         <div class="tab active">Terminal (UART)</div>
+        <div class="tab">Code Editor</div>
       </section>
       <section id="memdump" class="panel hidden">
       </section>
@@ -311,6 +343,21 @@
         <input type="button" id="uart-file-send" value="Send" />
         <div id="terminal"></div>
       </section>
+      <section id="codeedit" class="panel hidden">
+        <div id="code-panel">
+          <input type="text" placeholder="Program name" id="progname">
+          <button id="savecode">Save</button>
+          <button id="clearcode">Clear</button>
+          <button id="asmcode">Assemble</button>
+          <button id="loadcode">Assemble and load</button>
+          <button id="downasm">Download Program</button>
+        </div>
+        <div id="code-files">
+        </div>
+        <div id="code-editor">
+          <textarea class="form-control" id="code" name="code"></textarea>
+        </div>
+      </section>
     </section>
 
     <footer>
@@ -341,6 +388,8 @@
     <script src="view/screen.js"></script>
     <script src="view/panel.js"></script>
     <script src="view/readrom.js"></script>
+    <script src="view/editor/workspace_db.js"></script>
+    <script src="view/editor/codeedit.js"></script>
     <script src="view/init.js"></script>
   </body>
 </html>

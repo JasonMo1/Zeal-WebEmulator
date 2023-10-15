@@ -47,3 +47,46 @@ function hex16(high, lower, noprefix) {
     const value = (high << 8) | lower;
     return `${noprefix ? "" : "0x"}${hex(value, true)}`;
 }
+
+function download(e, t) {
+    var r = document.createElement("a");
+    r.setAttribute("href", "data:text/plain;charset=utf-8," + t),
+    r.setAttribute("download", e),
+    document.body.appendChild(r),
+    r.click(),
+    document.body.removeChild(r);
+}
+
+function downloadBinary(_filename="Zeal-WebEmulator-File.txt", _binary) {
+    const toHex = (num, length) => {
+        let hex = num.toString(16);
+        while (hex.length < length) {
+            hex = "0" + hex;
+        }
+        return hex.toUpperCase();
+    };
+    let encodedString = "";
+    for (let i = 0; i < _binary.length; i++) {
+        encodedString += "%" + toHex(255 & _binary[i], 2);
+    }
+    download(_filename, encodedString);
+}
+
+function downloadString(_filename="Zeal-WebEmulator-File.txt", _str) {
+    for (var r = "", n = 0; n < _str.length; n++) {
+        r += "%" + _str.charCodeAt(n).toString(16);
+    }
+    download(_filename, r);
+}
+
+function getProgramName() {
+    let progname = "myprogram.asm";
+    let input = $("#progname").val();
+    if (input) {
+        progname = input;
+        if (!progname.endsWith(".asm")) {
+            progname += ".asm";
+        }
+    }
+    return progname;
+}

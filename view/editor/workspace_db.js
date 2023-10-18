@@ -15,6 +15,18 @@ function WorkspaceDB() {
         return { from: 'file' };
     };
 
+    function sorter_update_file(_file) {
+        return { 
+            in: 'file',
+            where: {
+                filename: _file.filename
+            },
+            set: {
+                code: _file.code
+            }
+        }
+    }
+
     function init() {
         let dbTable = {
             name: tableName,
@@ -105,6 +117,7 @@ function WorkspaceDB() {
     this.removeFile = (_filename) => dbConnection.remove(sorter_file(_filename));
     this.selectAll = () => dbConnection.select(sorter_all());
     this.removeAll = () => dbConnection.remove(sorter_all());
+    this.updateFile = (_file) => dbConnection.update(sorter_update_file(_file));
     this._displayAll = _displayAll;
     this._dropDB = _dropDB;
     this._generateFile = _generateFile;

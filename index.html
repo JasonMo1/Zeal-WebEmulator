@@ -31,8 +31,6 @@
     <script src="component/disassembler/opcodes_ed.js"></script>
     <script src="component/disassembler/opcodes_ixiy.js"></script>
     <!-- Assembler-related -->
-    <!-- <script src="component/assembler/asm.js"></script>
-    <script src="component/assembler/assembler.js"></script> -->
     <script src="component/assembler.next/assembler.js"></script>
     <!-- Codemirror -->
     <!-- main -->
@@ -345,7 +343,7 @@
       </section>
       <section id="codeedit" class="panel hidden">
         <div id="code-panel">
-          <input type="text" placeholder="Program name" id="progname">
+          <div id="filenametab">No file opened</div>
           <button id="savecode">Save</button>
           <button id="clearcode">Clear</button>
           <button id="asmcode">Assemble</button>

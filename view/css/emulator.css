@@ -387,6 +387,18 @@ hr {
     color: var(--fourth-bg-color);
 }
 
+#filenametab {
+    border: 0.5em solid var(--third-bg-color);
+    background-color: var(--first-txt-color);
+    color: var(--fourth-bg-color);
+    height: 1em;
+    width: 17.5em;
+    display: inline-block;
+    margin-right: 1px;
+    border-radius: 5px;
+    font-family: 'cascadiacode';
+}
+
 .files div:hover .filepanel {
     display: block;
 }

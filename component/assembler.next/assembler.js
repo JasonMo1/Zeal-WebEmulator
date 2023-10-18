@@ -1,7 +1,7 @@
 function Assembler() {
     async function _getFile(filename) {
         let file = await wdb.selectFile(filename);
-        if (file) return file[0].code;
+        if (file.length > 0) return file[0].code;
     }
 
     function compile(mode, src, filename, asm80opts = undefined) {
@@ -80,6 +80,7 @@ function Assembler() {
             //        (this pass is not repeated)
             // It should be all resolved aftrer the 2nd pass
             metacode = pass2(metacode, opts);
+            console.log(metacode);
 
             return [null, metacode, opts.xref];
         } catch (e) {

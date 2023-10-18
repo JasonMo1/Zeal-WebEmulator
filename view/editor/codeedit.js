@@ -1,5 +1,85 @@
+async function openFile(_filename) {
+    if (dontOpen === false) {
+        editor.latestfile = editor.thisfile;
+        editor.thisfile = _filename;
+        $('#filenametab').html(editor.thisfile);
+        let file = await wdb.selectFile(_filename);
+        editor.setValue(file[0].code);
+    }
+}
+
+async function saveFile(_filename, _code) {
+    dontOpen = true;
+    try {
+        const codefile = { filename: _filename, code: _code };
+        let isSaved = await wdb.selectFile(_filename);
+        if (isSaved.length > 0) {
+            insertreq = await wdb.updateFile(codefile);
+        }
+        else {
+            insertreq = await wdb.insertFile(codefile);
+        }
+
+        if (insertreq > 0) {
+            popup.log('Saved '+codefile.filename);
+            setFileView();
+        }
+    }
+    catch (error) {
+        popup.error(error.message);
+    }
+    dontOpen = false;
+}
+
+async function deleteFile(_filename) {
+    dontOpen = true;
+    editor.thisfile = editor.latestfile;
+    let result = await wdb.removeFile(_filename);
+    if (result > 0) {
+        popup.log("Deleted " + _filename);
+        setFileView();
+    }
+    dontOpen = false;
+}
+
+async function downloadFile(_filename) {
+    if (editor.thisfile === _filename) {
+        downloadString(editor.thisfile, editor.getValue());
+    }
+    else {
+        let file = await wdb.selectFile(_filename);
+        downloadString(file[0].filename, file[0].code);
+    }
+}
+
+async function compileFile(_filename) {
+    let file = await wdb.selectFile(_filename);
+    assembler.compile(0, file[0].code, _filename.split(".")[0]);
+}
+
+async function loadFile(_filename) {
+    let file = await wdb.selectFile(_filename);
+    let bin = assembler.compile(3, file[0].code, _filename.split(".")[0]);
+    if (bin.length > 16384) {
+        popup.error("Your binary is too big to load");
+    }
+    else {
+        // Please use \r (ascii 13) instead of \n (ascii 10)
+        zealcom.keyboard.str_press("LOAD " + bin.length + "\r");
+        setTimeout(function() {
+            zealcom.uart.send_binary_array(bin);
+        }, 10);
+    }
+}
+
 async function setFileView() {
+    dontOpen = false;
     let buttons = [
+        {
+            name: "save",
+            short: "save",
+            svgpath: `<path d="M3 5.75A2.75 2.75 0 0 1 5.75 3h9.964a3.25 3.25 0 0 1 2.299.952l2.035 2.035c.61.61.952 1.437.952 2.299v9.964A2.75 2.75 0 0 1 18.25 21H5.75A2.75 2.75 0 0 1 3 18.25V5.75ZM5.75 4.5c-.69 0-1.25.56-1.25 1.25v12.5c0 .69.56 1.25 1.25 1.25H6v-5.25A2.25 2.25 0 0 1 8.25 12h7.5A2.25 2.25 0 0 1 18 14.25v5.25h.25c.69 0 1.25-.56 1.25-1.25V8.286c0-.465-.184-.91-.513-1.238l-2.035-2.035a1.75 1.75 0 0 0-.952-.49V7.25a2.25 2.25 0 0 1-2.25 2.25h-4.5A2.25 2.25 0 0 1 7 7.25V4.5H5.75Zm10.75 15v-5.25a.75.75 0 0 0-.75-.75h-7.5a.75.75 0 0 0-.75.75v5.25h9Zm-8-15v2.75c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75V4.5h-6Z" fill="#fff"/>`  
+        },
         { 
             name: "delete", 
             short: "del",
@@ -53,86 +133,44 @@ async function setFileView() {
     $("#code-files").html(result);
 
     $(".file").on("click", async function() {
-        let _filename = $(this).data("filename");
-        editor.thisfile = _filename;
-        let file = await wdb.selectFile(_filename)
-            .then((file) => {
-                editor.setValue(file[0].code);
-            });
+        await openFile($(this).data("filename"));
+    });
+
+    $(".savefile").on("click", async function() {
+        await saveFile($(this).data("filename"), editor.getValue());
     });
 
     $(".delfile").on("click", async function() {
-        let _filename = $(this).data("filename");
-        let result = await wdb.removeFile(_filename);
-        if (result > 0) {
-            popup.log("Deleted " + _filename);
-            setFileView();
-        }
+        await deleteFile($(this).data("filename"));
     });
     
     $(".downfile").on("click", async function() {
-        let file = await wdb.selectFile($(this).data("filename"));
-        downloadString(file[0].filename, file[0].code);
+        await downloadFile($(this).data("filename"));
     });
 
     $(".bldfile").on("click", async function(){
-        let file = await wdb.selectFile($(this).data("filename"));
-        assembler.compile(0, file[0].code);
-    })
+        await compileFile($(this).data("filename"));
+    });
 
     $(".sndfile").on("click", async function() {
-        let file = await wdb.selectFile($(this).data("filename"));
-        let bin = assembler.compile(3, file[0].code, $(this).data("filename").split(".")[0]);
-        let binsize = bin.length;
-        if (binsize > 16384) {
-            popup.error("Your binary is too big to load");
-        }
-        else {
-            // Use \r (ascii 13) instead of \n (ascii 10)
-            zealcom.keyboard.str_press("LOAD " + binsize + "\r");
-            setTimeout(function() {
-                zealcom.uart.send_binary_array(bin);
-            }, 10);
-        }
-    })
+        await loadFile($(this).data("filename"));
+    });
 }
 
-$("#downasm").on("click", function() {
-    downloadString(editor.thisfile, editor.getValue());
+$("#downasm").on("click", async function() {
+    await downloadFile(editor.thisfile);
 });
 
 $("#savecode").on("click", async function() {
-    const codefile = { filename: getProgramName(), code: editor.getValue() };
-    try {
-        let insertreq = await wdb.insertFile(codefile);
-
-        if (insertreq > 0) {
-            popup.log('Saved '+codefile.filename);
-            setFileView();
-        }
-    }
-    catch (error) {
-        popup.error(error.message);
-    }
+    await saveFile(editor.thisfile, editor.getValue());
 });
 
-$("#asmcode").on("click", function() {
-    assembler.compile(0, editor.getValue(), editor.thisfile.split(".")[0]);
+$("#asmcode").on("click", async function() {
+    await compileFile(editor.thisfile);
 });
 
 $("#loadcode").on("click", async function() {
-    let bin = assembler.compile(3, editor.getValue());
-    let binsize = bin.length;
-    if (binsize > 16384) {
-        popup.error("Your binary is too big to load");
-    }
-    else {
-        // Use \r (ascii 13) instead of \n (ascii 10)
-        zealcom.keyboard.str_press("LOAD " + binsize + "\r");
-        setTimeout(function() {
-            zealcom.uart.send_binary_array(bin);
-        }, 10);
-    }
+    await loadFile(editor.thisfile);
 });
 
 $(document).ready(setFileView);

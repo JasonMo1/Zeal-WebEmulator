@@ -78,15 +78,3 @@ function downloadString(_filename="Zeal-WebEmulator-File.txt", _str) {
     }
     download(_filename, r);
 }
-
-function getProgramName() {
-    let progname = "myprogram.asm";
-    let input = $("#progname").val();
-    if (input) {
-        progname = input;
-        if (!progname.endsWith(".asm")) {
-            progname += ".asm";
-        }
-    }
-    return progname;
-}

@@ -1,5 +1,5 @@
 function Assembler() {
-    var _getFile = (_filename) => wfs.select(_filename);
+    var _getFile = (_this, _target, is_file) => wfs.select(wfs.path.join(_this, _target, is_file));
 
     function compile(mode, src, filename, asm80opts = undefined) {
         if (!src) {
@@ -7,9 +7,9 @@ function Assembler() {
             return;
         } else {
             if (asm80opts) {
-                asm80obj = compileSrc(src, opts);
+                asm80obj = compileSrc(src, opts, filename);
             } else {
-                asm80obj = compileSrc(src, { assembler: assembler.Z80Instr });
+                asm80obj = compileSrc(src, { assembler: Z80Instr }, filename);
             }
             switch (asm80obj[0]) {
                 case undefined:
@@ -19,23 +19,18 @@ function Assembler() {
                     var opcodes = asm80obj[1];
                     switch (mode) {
                         case 0:
-                            downloadBinary(
-                                filename + ".bin",
-                                assembler.returnAs.bin(opcodes[0]),
-                            );
+                            downloadBinary(filename + ".bin", returnAs.bin(opcodes[0]));
                             break;
                         case 3:
-                            return assembler.returnAs.bin(opcodes[0]);
+                            return returnAs.bin(opcodes[0]);
                         case "debug":
                             console.log(opcodes);
                             break;
                     }
                     break;
                 default:
-                    popup.error(
-                        asm80obj[0].msg + "\nLine: " + asm80obj[0].s.numline,
-                    );
-                    console.error(asm80obj)
+                    popup.error(asm80obj[0].msg + "\nLine: " + asm80obj[0].s.numline);
+                    console.error(asm80obj);
             }
         }
     }
@@ -43,7 +38,7 @@ function Assembler() {
     //////////////////////////////////////////////////////////////////
     // origin: https://github.com/asm80/asm80-core/blob/main/asm.js //
     //////////////////////////////////////////////////////////////////
-    const compileSrc = (source, opts = { assembler: null }) => {
+    const compileSrc = (source, opts = { assembler: null }, _filename) => {
         opts = {
             ...opts,
             fileGet: _getFile,
@@ -61,19 +56,19 @@ function Assembler() {
         try {
             // parse source code into internal representation
             // let parsedSource = Parser.parse(source, opts);
-            let parsedSource = parse(source, opts);
+            let parsedSource = parse(source, opts, _filename);
             console.log(parsedSource);
 
             // pass 1: prepare instruction codes and try to evaluate expressions
-            let metacode = pass1(parsedSource, null, opts);
+            let metacode = pass1(parsedSource, null, opts, _filename);
             console.log(metacode);
 
             // metacode is passed again and again until all expressions are evaluated
             for (let icnt = 0; icnt < 4; icnt++) {
-                metacode = pass1(metacode[0], metacode[1], opts);
+                metacode = pass1(metacode[0], metacode[1], opts, _filename);
                 console.log(metacode);
             }
-            
+
             metacode[1]["__PRAGMAS"] = opts.PRAGMAS;
 
             // pass 2: assign addresses to labels and evaluate expressions
@@ -83,6 +78,7 @@ function Assembler() {
             console.log(metacode);
 
             return [null, metacode, opts.xref];
+            
         } catch (e) {
             // Some error occured
             let s = e.s || "Internal error";
@@ -106,12 +102,7 @@ function Assembler() {
 
             //no message, so we use the general one
             if (!e.msg) {
-                return [
-                    "Cannot evaluate line " +
-                        opts.WLINE.numline +
-                        ", there is some unspecified error (e.g. reserved world as label etc.)",
-                    null,
-                ];
+                return ["Cannot evaluate line " + opts.WLINE.numline + ", there is some unspecified error (e.g. reserved world as label etc.)", null];
             }
             if (!e.s) e.s = s;
 
@@ -175,9 +166,8 @@ function Assembler() {
 
     Expression.prototype = {
         // Based on http://www.json.org/json2.js
-        escapeValue: function(v) {
-                let escapable =
-                    /[\\\'\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+        escapeValue: function (v) {
+            let escapable = /[\\\'\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
                 meta = {
                     // table of character substitutions
                     "\b": "\\b",
@@ -188,23 +178,18 @@ function Assembler() {
                     "'": "\\'",
                     "\\": "\\\\",
                 };
-                if (typeof v === "string") {
-                    escapable.lastIndex = 0;
-                    return escapable.test(v)
-                        ? "'" +
-                            v.replace(escapable, function (a) {
-                                let c = meta[a];
-                                return typeof c === "string"
-                                    ? c
-                                    : "\\u" +
-                                            (
-                                                "0000" + a.charCodeAt(0).toString(16)
-                                            ).slice(-4);
-                            }) +
-                            "'"
-                        : "'" + v + "'";
-                }
-                return v;
+            if (typeof v === "string") {
+                escapable.lastIndex = 0;
+                return escapable.test(v)
+                    ? "'" +
+                          v.replace(escapable, function (a) {
+                              let c = meta[a];
+                              return typeof c === "string" ? c : "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
+                          }) +
+                          "'"
+                    : "'" + v + "'";
+            }
+            return v;
         },
 
         simplify: function (values) {
@@ -247,12 +232,7 @@ function Assembler() {
                 newexpression.push(nstack.shift());
             }
 
-            return new Expression(
-                newexpression,
-                object(this.ops1),
-                object(this.ops2),
-                object(this.functions),
-            );
+            return new Expression(newexpression, object(this.ops1), object(this.ops2), object(this.functions));
         },
 
         substitute: function (variable, expr) {
@@ -269,12 +249,7 @@ function Assembler() {
                 if (type_ === Tlet && item.index_ === variable) {
                     for (let j = 0; j < expr.tokens.length; j++) {
                         let expritem = expr.tokens[j];
-                        let replitem = new Token(
-                            expritem.type_,
-                            expritem.index_,
-                            expritem.prio_,
-                            expritem.number_,
-                        );
+                        let replitem = new Token(expritem.type_, expritem.index_, expritem.prio_, expritem.number_);
                         newexpression.push(replitem);
                     }
                 } else {
@@ -282,12 +257,7 @@ function Assembler() {
                 }
             }
 
-            let ret = new Expression(
-                newexpression,
-                object(this.ops1),
-                object(this.ops2),
-                object(this.functions),
-            );
+            let ret = new Expression(newexpression, object(this.ops1), object(this.ops2), object(this.functions));
             return ret;
         },
 
@@ -319,9 +289,7 @@ function Assembler() {
                         }
                     } else if (item.index_[0] === ">") {
                         if (item.index_.substr(1) in values) {
-                            nstack.push(
-                                Math.floor(values[item.index_.substr(1)] / 256),
-                            );
+                            nstack.push(Math.floor(values[item.index_.substr(1)] / 256));
                         }
                     } else if (item.index_ in values) {
                         nstack.push(values[item.index_]);
@@ -338,10 +306,7 @@ function Assembler() {
                     n1 = nstack.pop();
                     f = nstack.pop();
                     if (f.apply && f.call) {
-                        if (
-                            Object.prototype.toString.call(n1) ==
-                            "[object Array]"
-                        ) {
+                        if (Object.prototype.toString.call(n1) == "[object Array]") {
                             nstack.push(f.apply(undefined, n1));
                         } else {
                             nstack.push(f.call(undefined, n1));
@@ -398,9 +363,7 @@ function Assembler() {
                         }
                     } else if (item.index_[0] === ">") {
                         if (item.index_.substr(1) in values) {
-                            nstack.push(
-                                Math.floor(values[item.index_.substr(1)] / 256),
-                            );
+                            nstack.push(Math.floor(values[item.index_.substr(1)] / 256));
                             xref.push(item.index_.substr(1));
                         }
                     } else if (item.index_ in values) {
@@ -420,10 +383,7 @@ function Assembler() {
                     n1 = nstack.pop();
                     f = nstack.pop();
                     if (f.apply && f.call) {
-                        if (
-                            Object.prototype.toString.call(n1) ==
-                            "[object Array]"
-                        ) {
+                        if (Object.prototype.toString.call(n1) == "[object Array]") {
                             nstack.push(f.apply(undefined, n1));
                         } else {
                             nstack.push(f.call(undefined, n1));
@@ -501,12 +461,7 @@ function Assembler() {
         },
 
         toJSFunction: function (param, variables) {
-            let f = new Function(
-                param,
-                "with(Parser.values) { return " +
-                    this.simplify(variables).toString(true) +
-                    "; }",
-            );
+            let f = new Function(param, "with(Parser.values) { return " + this.simplify(variables).toString(true) + "; }");
             return f;
         },
     };
@@ -546,7 +501,7 @@ function Assembler() {
             }
             return o;
         }
-    
+
         function add(a, b) {
             if (typeof a == "string") {
                 a = stringCode(a);
@@ -556,39 +511,39 @@ function Assembler() {
             }
             return Number(a) + Number(b);
         }
-    
+
         function fand(a, b) {
             return Number(a) & Number(b);
         }
-    
+
         function fnebo(a, b) {
             return Number(a) | Number(b);
         }
-    
+
         function fbequ(a, b) {
             return Number(a) == Number(b) ? 1 : 0;
         }
-    
+
         function fbnequ(a, b) {
             return Number(a) == Number(b) ? 0 : 1;
         }
-    
+
         function fblt(a, b) {
             return Number(a) < Number(b) ? 1 : 0;
         }
-    
+
         function fbgt(a, b) {
             return Number(a) > Number(b) ? 1 : 0;
         }
-    
+
         function fble(a, b) {
             return Number(a) <= Number(b) ? 1 : 0;
         }
-    
+
         function fbge(a, b) {
             return Number(a) >= Number(b) ? 1 : 0;
         }
-    
+
         function sub(a, b) {
             if (typeof a == "string") {
                 a = stringCode(a);
@@ -598,7 +553,7 @@ function Assembler() {
             }
             return Number(a) - Number(b);
         }
-    
+
         function mul(a, b) {
             if (typeof a == "string") {
                 let out = "";
@@ -607,19 +562,19 @@ function Assembler() {
             }
             return a * b;
         }
-    
+
         function div(a, b) {
             return a / b;
         }
-    
+
         function mod(a, b) {
             return a % b;
         }
-    
+
         function concat(a, b) {
             return "" + a + b;
         }
-    
+
         function neg(a) {
             return -a;
         }
@@ -632,11 +587,11 @@ function Assembler() {
             a.push(b);
             return a;
         }
-    
+
         function lsb(a) {
             return a % 256;
         }
-    
+
         function msb(a) {
             return (a >> 8) & 0xff;
         }
@@ -780,8 +735,7 @@ function Assembler() {
             this.expression = expr;
             this.pos = 0;
 
-            if (!this.expression)
-                throw new Error("Empty expression, probably missing argument");
+            if (!this.expression) throw new Error("Empty expression, probably missing argument");
 
             while (this.pos < this.expression.length) {
                 if (this.isNumber()) {
@@ -830,8 +784,7 @@ function Assembler() {
                         this.addfunc(tokenstack, operstack, TFUNCALL);
                     }
 
-                    expected =
-                        PRIMARY | LPAREN | FUNCTION | SIGN | NULLARY_CALL;
+                    expected = PRIMARY | LPAREN | FUNCTION | SIGN | NULLARY_CALL;
                 } else if (this.isRightParenth()) {
                     if (expected & NULLARY_CALL) {
                         let token = new Token(TNUMBER, 0, 0, []);
@@ -880,10 +833,7 @@ function Assembler() {
                 } else if (this.isWhite()) {
                 } else {
                     if (this.errormsg === "") {
-                        this.error_parsing(
-                            this.pos,
-                            "unknown character in " + this.expression,
-                        );
+                        this.error_parsing(this.pos, "unknown character in " + this.expression);
                     } else {
                         this.error_parsing(this.pos, this.errormsg);
                     }
@@ -902,12 +852,7 @@ function Assembler() {
                 this.error_parsing(this.pos, "parity");
             }
 
-            return new Expression(
-                tokenstack,
-                object(this.ops1),
-                object(this.ops2),
-                object(this.functions),
-            );
+            return new Expression(tokenstack, object(this.ops1), object(this.ops2), object(this.functions));
         },
 
         evaluate: function (expr, variables) {
@@ -925,12 +870,7 @@ function Assembler() {
         //\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
         addfunc: function (tokenstack, operstack, type_) {
-            let operator = new Token(
-                type_,
-                this.tokenindex,
-                this.tokenprio + this.tmpprio,
-                0,
-            );
+            let operator = new Token(type_, this.tokenindex, this.tokenprio + this.tmpprio, 0);
             while (operstack.length > 0) {
                 if (operator.prio_ <= operstack[operstack.length - 1].prio_) {
                     tokenstack.push(operstack.pop());
@@ -972,11 +912,7 @@ function Assembler() {
                     (firstok > 0 && code >= 65 && code <= 70) ||
                     (firstok > 0 && code >= 97 && code <= 102)
                 ) {
-                    if (
-                        ((firstok > 0 && code >= 65 && code <= 70) ||
-                            (firstok > 0 && code >= 97 && code <= 102)) &&
-                        !(base === 16)
-                    ) {
+                    if (((firstok > 0 && code >= 65 && code <= 70) || (firstok > 0 && code >= 97 && code <= 102)) && !(base === 16)) {
                         shouldbehex = true;
                     }
 
@@ -993,30 +929,19 @@ function Assembler() {
                     if (str[1] === "x" || str[1] === "X") {
                         base = 16;
                     }
-                    if (
-                        str[str.length - 1] === "h" ||
-                        str[str.length - 1] === "H"
-                    ) {
+                    if (str[str.length - 1] === "h" || str[str.length - 1] === "H") {
                         if (base == 10 || base == 2) {
                             strx = "0x" + str.substr(0, str.length - 1);
                             base = 16;
                         }
                     }
-                    if (
-                        str[str.length - 1] === "b" ||
-                        str[str.length - 1] === "B"
-                    ) {
+                    if (str[str.length - 1] === "b" || str[str.length - 1] === "B") {
                         if (base == 10) {
                             strx = str.substr(0, str.length - 1);
                             base = 2;
                         }
                     }
-                    if (
-                        str[str.length - 1] === "q" ||
-                        str[str.length - 1] === "Q" ||
-                        str[str.length - 1] === "o" ||
-                        str[str.length - 1] === "O"
-                    ) {
+                    if (str[str.length - 1] === "q" || str[str.length - 1] === "Q" || str[str.length - 1] === "o" || str[str.length - 1] === "O") {
                         if (base == 10) {
                             strx = str.substr(0, str.length - 1);
                             base = 8;
@@ -1102,18 +1027,12 @@ function Assembler() {
                             break;
                         case "u":
                             // interpret the following 4 characters as the hex of the unicode code point
-                            let codePoint = parseInt(
-                                v.substring(i + 1, i + 5),
-                                16,
-                            );
+                            let codePoint = parseInt(v.substring(i + 1, i + 5), 16);
                             buffer.push(String.fromCharCode(codePoint));
                             i += 4;
                             break;
                         default:
-                            throw this.error_parsing(
-                                pos + i,
-                                "Illegal escape sequence: '\\" + c + "'",
-                            );
+                            throw this.error_parsing(pos + i, "Illegal escape sequence: '\\" + c + "'");
                     }
                     escaping = false;
                 } else {
@@ -1132,11 +1051,7 @@ function Assembler() {
             let r = false;
             let str = "";
             let startpos = this.pos;
-            if (
-                (this.pos < this.expression.length &&
-                    this.expression.charAt(this.pos) == "'") ||
-                this.expression.charAt(this.pos) == '"'
-            ) {
+            if ((this.pos < this.expression.length && this.expression.charAt(this.pos) == "'") || this.expression.charAt(this.pos) == '"') {
                 let delim = this.expression.charAt(this.pos);
                 this.pos++;
                 while (this.pos < this.expression.length) {
@@ -1396,11 +1311,7 @@ function Assembler() {
                     str = "_PC";
                     break;
                 }
-                if (
-                    c.toUpperCase() === c.toLowerCase() &&
-                    c !== "<" &&
-                    c !== ">"
-                ) {
+                if (c.toUpperCase() === c.toLowerCase() && c !== "<" && c !== ">") {
                     if (i === this.pos || (c != "_" && (c < "0" || c > "9"))) {
                         break;
                     }
@@ -1451,8 +1362,7 @@ function Assembler() {
                 _PC = ORGPC[0];
                 ORGPC = [];
                 return a.slice(_PC);
-            }
-            else {
+            } else {
                 return a;
             }
         },
@@ -1460,7 +1370,7 @@ function Assembler() {
         ///////////////////////////////////////////////////////////////////////
         // origin: https://github.com/asm80/asm80-core/blob/main/beautify.js //
         ///////////////////////////////////////////////////////////////////////
-        emptymask: function(xs) {
+        emptymask: function (xs) {
             xs.map((lx) => {
                 let l = lx.line;
                 let lx2 = {
@@ -1475,15 +1385,19 @@ function Assembler() {
             });
         },
 
-        beautify: function(s, opts) {
+        beautify: function (s, opts, filename) {
             let i = toInternal(s.split(/\n/));
             i = emptymask(i);
             i = nonempty(i);
             i = norm(i);
-            let prei = prepro(i, {
-                noinclude: true,
-                ...opts,
-            });
+            let prei = prepro(
+                i,
+                {
+                    noinclude: true,
+                    ...opts,
+                },
+                (filename = filename),
+            );
             i = i.map((line) => {
                 //console.log(line);
                 line.line = line.line.replace(/\%\%M/gi, "__m");
@@ -1506,12 +1420,7 @@ function Assembler() {
 
                 if (op.label) {
                     ln += op.label;
-                    if (
-                        op.opcode != "EQU" &&
-                        op.opcode != "=" &&
-                        op.opcode != ".SET"
-                    )
-                        ln += ":";
+                    if (op.opcode != "EQU" && op.opcode != "=" && op.opcode != ".SET") ln += ":";
                     ln += " ";
                 }
                 while (ln.length < 12) {
@@ -1538,7 +1447,7 @@ function Assembler() {
         //////////////////////////////////////////////////////////////////////
         // origin: https://github.com/asm80/asm80-core/blob/main/listing.js //
         //////////////////////////////////////////////////////////////////////
-        lst: function(V, vars, raw, compact = false, opts) {
+        lst: function (V, vars, raw, compact = false, opts) {
             let ln;
             let op;
             let out = "";
@@ -1631,16 +1540,12 @@ function Assembler() {
                 }
                 ln += toHex4(xref[k].value);
                 ln += " DEFINED AT LINE " + xref[k].defined.line;
-                if (xref[k].defined.file != "*main*")
-                    ln += " IN " + xref[k].defined.file;
+                if (xref[k].defined.file != "*main*") ln += " IN " + xref[k].defined.file;
                 out += ln + "\n";
                 if (xref[k].usage) {
                     for (let j = 0; j < xref[k].usage.length; j++) {
-                        out +=
-                            "                    > USED AT LINE " +
-                            xref[k].usage[j].line;
-                        if (xref[k].usage[j].file != "*main*")
-                            out += " IN " + xref[k].usage[j].file;
+                        out += "                    > USED AT LINE " + xref[k].usage[j].line;
+                        if (xref[k].usage[j].file != "*main*") out += " IN " + xref[k].usage[j].file;
                         out += "\n";
                     }
                 }
@@ -1648,7 +1553,7 @@ function Assembler() {
             return out;
         },
 
-        html: function(V, vars, raw, compact = false) {
+        html: function (V, vars, raw, compact = false) {
             let parfix = (par) => {
                 par += "";
                 for (let k in vars) {
@@ -1672,12 +1577,7 @@ function Assembler() {
                     /*ln += '        **MACRO UNROLL - '+op.macro+'\n';*/
                 }
                 if (op.addr !== undefined) {
-                    ln +=
-                        '<td><a name="ADDR' +
-                        toHex4(op.addr) +
-                        '">' +
-                        toHex4(op.addr) +
-                        "</a>";
+                    ln += '<td><a name="ADDR' + toHex4(op.addr) + '">' + toHex4(op.addr) + "</a>";
                     if (op.phase) {
                         ln += "</td><td>" + toHex4(op.addr - op.phase);
                     } else ln += "</td><td>";
@@ -1692,12 +1592,7 @@ function Assembler() {
                 } else ln += "<td></td>";
 
                 if (op.label) {
-                    ln +=
-                        '<td><a name="LBL' +
-                        op.label +
-                        '">' +
-                        op.label +
-                        "</a></td>";
+                    ln += '<td><a name="LBL' + op.label + '">' + op.label + "</a></td>";
                 } else ln += "<td></td>";
                 if (op.opcode) {
                     ln += "<td>" + op.opcode + "</td>";
@@ -1723,11 +1618,7 @@ function Assembler() {
         return s.includedFileAtLine + "__" + s.numline;
     };
 
-    const parseLine = (
-        s,
-        macros,
-        opts = { stopFlag: null, olds: null, assembler: null },
-    ) => {
+    const parseLine = (s, macros, opts = { stopFlag: null, olds: null, assembler: null }) => {
         let t = s.line;
         let ll;
 
@@ -1792,20 +1683,11 @@ function Assembler() {
 
             while (t.match(/\'(.*?)\'/g)) {
                 //console.log(t)
-                t = t.replace(
-                    /\'(.*?)\'/g,
-                    (n) =>
-                        "00ss" +
-                        btoax('"' + n.substr(1, n.length - 2) + '"') +
-                        "!",
-                );
+                t = t.replace(/\'(.*?)\'/g, (n) => "00ss" + btoax('"' + n.substr(1, n.length - 2) + '"') + "!");
             }
 
             while (t.match(/\{(.*?)\}/g)) {
-                t = t.replace(
-                    /\{(.*?)\}/g,
-                    (n) => "00bb" + btoax(n.substr(1, n.length - 2)),
-                );
+                t = t.replace(/\{(.*?)\}/g, (n) => "00bb" + btoax(n.substr(1, n.length - 2)));
             }
             //} catch(e) {
             // console.log(e,t)
@@ -1845,9 +1727,7 @@ function Assembler() {
                 let px = ppc.split(/\s*,\s*/);
                 s.params = px.map((ppc) => {
                     let p = ppc.replace(/€/g, ",").replace(/§/g, ";").trim();
-                    p = p.replace(/00ss(.*?)\!/g, (n) =>
-                        atobx(n.substr(4, n.length - 5)),
-                    );
+                    p = p.replace(/00ss(.*?)\!/g, (n) => atobx(n.substr(4, n.length - 5)));
                     return p;
                 });
 
@@ -1860,9 +1740,7 @@ function Assembler() {
         if (t) {
             let rr = t.match(/^\s*;*(.*)/);
             if (rr) {
-                s.remark = rr[1].replace(/00ss(.*?)\!/g, (n) =>
-                    atobx(n.substr(4, n.length - 5)),
-                );
+                s.remark = rr[1].replace(/00ss(.*?)\!/g, (n) => atobx(n.substr(4, n.length - 5)));
                 if (!s.remark) {
                     s.remark = " ";
                 }
@@ -1877,9 +1755,7 @@ function Assembler() {
             s.opcode = ".ORG";
         }
         if (s.opcode === ".ERROR") {
-            s.paramstring = s.paramstring.replace(/00ss(.*?)\!/g, (n) =>
-                atobx(n.substr(4, n.length - 5)),
-            );
+            s.paramstring = s.paramstring.replace(/00ss(.*?)\!/g, (n) => atobx(n.substr(4, n.length - 5)));
             return s;
             //console.log(stopFlag,olds,vars)
             //throw { "msg": s.paramstring.replace(/00ss(.*?)\!/g, function (n) { return atobx(n.substr(4, n.length - 5)) }), "s":s};
@@ -2052,14 +1928,7 @@ function Assembler() {
             return s;
         }
 
-        if (
-            s.opcode === ".DEBUGINFO" ||
-            s.opcode === ".MACPACK" ||
-            s.opcode === ".FEATURE" ||
-            s.opcode === ".ZEROPAGE" ||
-            s.opcode === ".SEGMENT" ||
-            s.opcode === ".SETCPU"
-        ) {
+        if (s.opcode === ".DEBUGINFO" || s.opcode === ".MACPACK" || s.opcode === ".FEATURE" || s.opcode === ".ZEROPAGE" || s.opcode === ".SEGMENT" || s.opcode === ".SETCPU") {
             s.opcode = "";
             return s;
         }
@@ -2108,8 +1977,7 @@ function Assembler() {
                 };
             //hotfix
             //console.log(s)
-            if (s.params[0].indexOf(":=") === 0)
-                s.params[0] = ".SET" + s.params[0].substr(2);
+            if (s.params[0].indexOf(":=") === 0) s.params[0] = ".SET" + s.params[0].substr(2);
             s2.line = s.opcode + ": " + s.params.join();
             if (s.remark) s2.line += " ;" + s.remark;
             //console.log("ATTEMPT2",s2.line)
@@ -2141,7 +2009,7 @@ function Assembler() {
     /////////////////////////////////////////////////////////////////////
     // assembler file parser
     // gets a text file, returns an array of parsed lines
-    function parse(s, opts) {
+    function parse(s, opts, _filename) {
         // split and convert to internal lines
         let i = toInternal(s.split(/\n/));
         //remove empty lines
@@ -2151,26 +2019,25 @@ function Assembler() {
 
         //macro processing and expansion
 
-        let prei = prepro(i, opts);
+        let prei = prepro(i, opts, null, _filename);
         //console.log(prei)
         i = prei[0].map((line) => parseLine(line, prei[1], opts));
         i = unroll(i, prei[1], null, opts);
 
         //console.log("prei",i)
         return i;
-    };
+    }
 
     ////////////////////////////////////////////////////////////////////
     // origin: https://github.com/asm80/asm80-core/blob/main/pass1.js //
     ////////////////////////////////////////////////////////////////////
     var ORGPC = [];
-    
-    const pass1 = (V, vxs, opts) => {
+
+    const pass1 = (V, vxs, opts, filename) => {
         if (!opts.xref) opts.xref = {};
         let segment = "CSEG";
         let segallow = () => {
-            if (segment === "BSSEG")
-                throw { msg: op.opcode + " is not allowed in BSSEG" };
+            if (segment === "BSSEG") throw { msg: op.opcode + " is not allowed in BSSEG" };
         };
         let seg = {};
         let PC = 0;
@@ -2323,17 +2190,10 @@ function Assembler() {
                 //console.log(varname, blocks)
                 //console.log(op.label,beGlobal,vars[op.label]!==undefined, vars, vxs);
                 if (!vxs) {
-                    if (
-                        typeof vars[varname + "$"] !== "undefined" ||
-                        (beGlobal && vars[op.label] !== undefined)
-                    ) {
+                    if (typeof vars[varname + "$"] !== "undefined" || (beGlobal && vars[op.label] !== undefined)) {
                         if (op.opcode !== ".SET" && op.opcode !== ":=") {
                             throw {
-                                msg:
-                                    "Redefine label " +
-                                    op.label +
-                                    " at line " +
-                                    op.numline,
+                                msg: "Redefine label " + op.label + " at line " + op.numline,
                                 s: op,
                             };
                         }
@@ -2435,11 +2295,7 @@ function Assembler() {
                     };
                     continue;
                 }
-                if (
-                    op.opcode === "=" ||
-                    op.opcode === ":=" ||
-                    op.opcode === ".SET"
-                ) {
+                if (op.opcode === "=" || op.opcode === ":=" || op.opcode === ".SET") {
                     //console.log(op)
                     //changeble assign
                     vars[op.label] = Parser.evaluate(op.params[0], vars);
@@ -2495,11 +2351,7 @@ function Assembler() {
                 }
             }
 
-            if (
-                op.opcode === ".CSTR" ||
-                op.opcode === ".PSTR" ||
-                op.opcode === ".ISTR"
-            ) {
+            if (op.opcode === ".CSTR" || op.opcode === ".PSTR" || op.opcode === ".ISTR") {
                 segallow();
                 op.bytes = 0;
                 for (l = 0; l < op.params.length; l++) {
@@ -2659,7 +2511,7 @@ function Assembler() {
                         s: op,
                     };
                 //console.log("Include "+params[0]);
-                let nf = opts.fileGet(op.params[0], true);
+                let nf = opts.fileGet(filename, op.params[0], true);
                 if (!nf)
                     throw {
                         msg: "Cannot find file " + op.params[0] + " for incbin",
@@ -2735,8 +2587,7 @@ function Assembler() {
             } else {
                 //strict
                 if (typeof dta == "string") {
-                    if (dta.length != 1)
-                        throw "String parameter too long (" + dta + ")";
+                    if (dta.length != 1) throw "String parameter too long (" + dta + ")";
                     return dta.charCodeAt(0) & 0xff;
                 } else {
                     if (dta > 255) throw "Param out of bound (" + dta + ")";
@@ -2830,8 +2681,7 @@ function Assembler() {
                 try {
                     let usage = Parser.usage(op.params[0].toUpperCase(), vars);
                     for (let u = 0; u < usage.length; u++) {
-                        if (!opts.xref[usage[u]].usage)
-                            opts.xref[usage[u]].usage = [];
+                        if (!opts.xref[usage[u]].usage) opts.xref[usage[u]].usage = [];
                         opts.xref[usage[u]].usage.push({
                             line: op.numline,
                             file: op.includedFile || "*main*",
@@ -2841,8 +2691,7 @@ function Assembler() {
                 try {
                     let usage = Parser.usage(op.params[1].toUpperCase(), vars);
                     for (let u = 0; u < usage.length; u++) {
-                        if (!opts.xref[usage[u]].usage)
-                            opts.xref[usage[u]].usage = [];
+                        if (!opts.xref[usage[u]].usage) opts.xref[usage[u]].usage = [];
                         opts.xref[usage[u]].usage.push({
                             line: op.numline,
                             file: op.includedFile || "*main*",
@@ -2856,20 +2705,16 @@ function Assembler() {
                     else blocks.push(op.numline + "@" + op.includedFileAtLine);
                     let redef = vars["__" + blocks.join("/")];
                     for (let nn = 0; nn < redef.length; nn++) {
-                        vars[blocks.join("/") + "/" + redef[nn]] =
-                            vars[redef[nn]];
-                        vars[redef[nn]] =
-                            vars[blocks.join("/") + "/" + redef[nn] + "$"];
+                        vars[blocks.join("/") + "/" + redef[nn]] = vars[redef[nn]];
+                        vars[redef[nn]] = vars[blocks.join("/") + "/" + redef[nn] + "$"];
                     }
                     continue;
                 }
                 if (op.opcode === ".ENDBLOCK") {
                     let redef = vars["__" + blocks.join("/")];
                     for (let nn = 0; nn < redef.length; nn++) {
-                        vars[redef[nn]] =
-                            vars[blocks.join("/") + "/" + redef[nn]];
-                        if (vars[redef[nn]] === undefined)
-                            delete vars[redef[nn]];
+                        vars[redef[nn]] = vars[blocks.join("/") + "/" + redef[nn]];
+                        if (vars[redef[nn]] === undefined) delete vars[redef[nn]];
                         vars[blocks.join("/") + "/" + redef[nn]] = null;
                     }
                     blocks.pop();
@@ -2902,13 +2747,13 @@ function Assembler() {
                     opts.ENGINE = op.params[0];
                     continue;
                 }
-                
+
                 // if (op.opcode === ".PRAGMA") {
                 //     opts.PRAGMAS=opts.PRAGMAS || [];
                 //     opts.PRAGMAS.push(op.params[0].toUpperCase());
                 //     continue;
                 // }
-          
+
                 if (op.opcode === "EQU") {
                     //console.log(op.label);
                     if (!op.label)
@@ -3164,7 +3009,7 @@ function Assembler() {
                 // if (op.opcode === "DS") {
                 //     console.log(op);
                 // }
-                
+
                 // Tady se děje magie s instrukcí
                 if (op.anonymousLabel) {
                     //console.log(op);
@@ -3225,11 +3070,7 @@ function Assembler() {
                         op.lens[1] = charVar8(dta);
                     }
                 }
-                if (
-                    op.lens &&
-                    op.lens.length > 2 &&
-                    typeof op.lens[2] == "function"
-                ) {
+                if (op.lens && op.lens.length > 2 && typeof op.lens[2] == "function") {
                     //				console.log("OPLENS3",op.lens[3], op.lens[2]);
                     dta = op.lens[2](vars);
                     if (op.lens[3] === null) {
@@ -3256,11 +3097,7 @@ function Assembler() {
                     }
                 }
 
-                if (
-                    op.lens &&
-                    op.lens.length > 3 &&
-                    typeof op.lens[3] == "function"
-                ) {
+                if (op.lens && op.lens.length > 3 && typeof op.lens[3] == "function") {
                     dta = op.lens[3](vars);
                     if (op.lens[4] === null) {
                         dta = op.lens[3](vars);
@@ -3298,10 +3135,7 @@ function Assembler() {
                             msg: "param out of bounds, NaN",
                         };
                     }
-                    if (
-                        (op.lens[1] > 255 || op.lens[1] < -128) &&
-                        op.lens.length == 2
-                    ) {
+                    if ((op.lens[1] > 255 || op.lens[1] < -128) && op.lens.length == 2) {
                         throw {
                             msg: "param out of bounds - " + op.lens[1],
                         };
@@ -3388,7 +3222,7 @@ function Assembler() {
         };
     };
 
-    const prepro = (V, opts = {}, fullfile) => {
+    const prepro = (V, opts = {}, fullfile, filename) => {
         if (!opts.includedFiles) opts.includedFiles = {};
         let op,
             ln,
@@ -3451,21 +3285,12 @@ function Assembler() {
                     } else {
                         //only 2 pars.
                         //console.log(ln,px,px[0],block)
-                        if (
-                            opts.includedFiles[
-                                "*" +
-                                    px[0].toUpperCase() +
-                                    ":" +
-                                    block.toUpperCase()
-                            ]
-                        ) {
+                        if (opts.includedFiles["*" + px[0].toUpperCase() + ":" + block.toUpperCase()]) {
                             //ignore multiple partials
                             continue;
                         }
                     }
-                    opts.includedFiles[
-                        "*" + px[0].toUpperCase() + ":" + block.toUpperCase()
-                    ] = "used";
+                    opts.includedFiles["*" + px[0].toUpperCase() + ":" + block.toUpperCase()] = "used";
                 }
 
                 let ni;
@@ -3479,7 +3304,7 @@ function Assembler() {
                 } else {
                     //if (includedFiles[params[0].replace(/\"/g,"")]) throw {"msg":"File "+params[0].replace(/\"/g,"")+" is already included elsewhere - maybe recursion","s":V[i]};
                     //console.log("Include "+params[0]);
-                    nf = opts.fileGet(params[0].replace(/\"/g, ""));
+                    nf = opts.fileGet(filename, params[0].replace(/\"/g, ""), true);
                     if (!nf)
                         throw {
                             msg: "File " + params[0] + " not found",
@@ -3495,7 +3320,7 @@ function Assembler() {
                 }
 
                 //console.log(ni)
-                let preni = prepro(ni, {}, fullni);
+                let preni = prepro(ni, {}, fullni, nf);
                 for (let k = 0; k < preni[0].length; k++) {
                     preni[0][k].includedFile = params[0].replace(/\"/g, "");
                     preni[0][k].includedFileAtLine = V[i].numline;
@@ -3527,11 +3352,7 @@ function Assembler() {
                         remark: "REPT unroll",
                     });
                     for (let ii = 0; ii < reptCount; ii++) {
-                        for (
-                            let jj = 0;
-                            jj < macros[macroDefine].length;
-                            jj++
-                        ) {
+                        for (let jj = 0; jj < macros[macroDefine].length; jj++) {
                             let macline = macros[macroDefine][jj].line;
                             out.push({
                                 numline: V[ii].numline,
@@ -3548,11 +3369,7 @@ function Assembler() {
                         line: ";Macro define " + macroDefine,
                         addr: null,
                         bytes: 0,
-                        listing:
-                            ".macro " +
-                            macroDefine +
-                            (pars ? "," : "") +
-                            pars.join(","),
+                        listing: ".macro " + macroDefine + (pars ? "," : "") + pars.join(","),
                     });
                     let md = macros[macroDefine];
                     //console.log(md)
@@ -3594,17 +3411,12 @@ function Assembler() {
                         msg: "Bad macro name at line " + V[i].numline,
                         s: V[i],
                     };
-                if (macroName[macroName.length - 1] === ":")
-                    macroName = macroName.substr(0, macroName.length - 1);
+                if (macroName[macroName.length - 1] === ":") macroName = macroName.substr(0, macroName.length - 1);
 
                 macroDefine = macroName.toUpperCase();
                 if (macros[macroDefine])
                     throw {
-                        msg:
-                            "Macro " +
-                            macroDefine +
-                            " redefinition at line " +
-                            V[i].numline,
+                        msg: "Macro " + macroDefine + " redefinition at line " + V[i].numline,
                         s: V[i],
                     };
                 macros[macroDefine] = [params];
@@ -3670,13 +3482,7 @@ function Assembler() {
             //console.log(macros);
             for (let j = 0; j < m.length; j++) {
                 if (j === 0) continue;
-                let preline = macroParams(
-                    m[j],
-                    s.params,
-                    i + uniqseed,
-                    pars,
-                    s.numline,
-                );
+                let preline = macroParams(m[j], s.params, i + uniqseed, pars, s.numline);
                 preline.bytes = 0;
                 //console.log("PL",preline)
                 let ng = parseLine(preline, macros, {
@@ -3811,16 +3617,12 @@ function Assembler() {
 
         parseOpcode: function (s, vars, Parser) {
             var R8 = function (reg) {
-                var n = ["B", "C", "D", "E", "H", "L", "~", "A"].indexOf(
-                    reg.toUpperCase(),
-                );
+                var n = ["B", "C", "D", "E", "H", "L", "~", "A"].indexOf(reg.toUpperCase());
                 if (reg.toUpperCase() == "(HL)") return 6;
                 return n;
             };
             var R8F = function (reg) {
-                return ["B", "C", "D", "E", "H", "L", "F", "A"].indexOf(
-                    reg.toUpperCase(),
-                );
+                return ["B", "C", "D", "E", "H", "L", "F", "A"].indexOf(reg.toUpperCase());
             };
             var R16 = function (reg) {
                 var n = ["BC", "DE", "HL", "SP"].indexOf(reg.toUpperCase());
@@ -3839,9 +3641,7 @@ function Assembler() {
                 return n;
             };
             var COND = function (reg) {
-                var n = ["NZ", "Z", "NC", "C", "PO", "PE", "P", "M"].indexOf(
-                    reg.toUpperCase(),
-                );
+                var n = ["NZ", "Z", "NC", "C", "PO", "PE", "P", "M"].indexOf(reg.toUpperCase());
                 return n;
             };
             var LINK = function (par) {
@@ -3924,12 +3724,7 @@ function Assembler() {
 
             if (ax && !ax2) {
                 if ((s.params ? s.params.length : 0) > 1) {
-                    if (
-                        s.opcode !== "JP" &&
-                        s.opcode !== "JR" &&
-                        s.opcode !== "CALL"
-                    )
-                        throw "One parameter needed";
+                    if (s.opcode !== "JP" && s.opcode !== "JR" && s.opcode !== "CALL") throw "One parameter needed";
                 }
             }
 
@@ -3959,10 +3754,8 @@ function Assembler() {
                             var lab = Parser.evaluate(par, vars);
                             var pc = vars._PC + 2;
                             var disp = lab - pc;
-                            if (disp > 127)
-                                throw "Target is out of relative jump reach";
-                            if (disp < -128)
-                                throw "Target is out of relative jump reach";
+                            if (disp > 127) throw "Target is out of relative jump reach";
+                            if (disp < -128) throw "Target is out of relative jump reach";
                             if (disp < 0) {
                                 disp = 256 + disp;
                             }
@@ -4123,42 +3916,27 @@ function Assembler() {
 
                     //instrukce EX
                     if (s.opcode == "EX") {
-                        if (
-                            par1.toUpperCase() == "DE" &&
-                            par2.toUpperCase() == "HL"
-                        ) {
+                        if (par1.toUpperCase() == "DE" && par2.toUpperCase() == "HL") {
                             s.lens = [0xeb];
                             s.bytes = 1;
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "AF" &&
-                            par2.toUpperCase() == "AF'"
-                        ) {
+                        if (par1.toUpperCase() == "AF" && par2.toUpperCase() == "AF'") {
                             s.lens = [0x08];
                             s.bytes = 1;
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "(SP)" &&
-                            par2.toUpperCase() == "HL"
-                        ) {
+                        if (par1.toUpperCase() == "(SP)" && par2.toUpperCase() == "HL") {
                             s.lens = [0xe3];
                             s.bytes = 1;
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "(SP)" &&
-                            par2.toUpperCase() == "IX"
-                        ) {
+                        if (par1.toUpperCase() == "(SP)" && par2.toUpperCase() == "IX") {
                             s.lens = [0xdd, 0xe3];
                             s.bytes = 2;
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "(SP)" &&
-                            par2.toUpperCase() == "IY"
-                        ) {
+                        if (par1.toUpperCase() == "(SP)" && par2.toUpperCase() == "IY") {
                             s.lens = [0xfd, 0xe3];
                             s.bytes = 2;
                             return s;
@@ -4218,10 +3996,8 @@ function Assembler() {
                                     var lab = Parser.evaluate(par2, vars);
                                     var pc = vars._PC + 2;
                                     var disp = lab - pc;
-                                    if (disp > 127)
-                                        throw "Target is out of relative jump reach";
-                                    if (disp < -128)
-                                        throw "Target is out of relative jump reach";
+                                    if (disp > 127) throw "Target is out of relative jump reach";
+                                    if (disp < -128) throw "Target is out of relative jump reach";
                                     if (disp < 0) {
                                         disp = 256 + disp;
                                     }
@@ -4276,84 +4052,54 @@ function Assembler() {
                         //MASAKR
                         //
 
-                        if (
-                            par1.toUpperCase() == "A" &&
-                            par2.toUpperCase() == "R"
-                        ) {
+                        if (par1.toUpperCase() == "A" && par2.toUpperCase() == "R") {
                             s.bytes = 2;
                             s.lens = [0xed, 0x5f];
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "A" &&
-                            par2.toUpperCase() == "I"
-                        ) {
+                        if (par1.toUpperCase() == "A" && par2.toUpperCase() == "I") {
                             s.bytes = 2;
                             s.lens = [0xed, 0x57];
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "R" &&
-                            par2.toUpperCase() == "A"
-                        ) {
+                        if (par1.toUpperCase() == "R" && par2.toUpperCase() == "A") {
                             s.bytes = 2;
                             s.lens = [0xed, 0x4f];
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "I" &&
-                            par2.toUpperCase() == "A"
-                        ) {
+                        if (par1.toUpperCase() == "I" && par2.toUpperCase() == "A") {
                             s.bytes = 2;
                             s.lens = [0xed, 0x47];
                             return s;
                         }
 
                         //Syntaktic sugar
-                        if (
-                            par1.toUpperCase() == "HL" &&
-                            par2.toUpperCase() == "DE"
-                        ) {
+                        if (par1.toUpperCase() == "HL" && par2.toUpperCase() == "DE") {
                             s.bytes = 2;
                             s.lens = [0x62, 0x6b];
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "HL" &&
-                            par2.toUpperCase() == "BC"
-                        ) {
+                        if (par1.toUpperCase() == "HL" && par2.toUpperCase() == "BC") {
                             s.bytes = 2;
                             s.lens = [0x60, 0x69];
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "DE" &&
-                            par2.toUpperCase() == "HL"
-                        ) {
+                        if (par1.toUpperCase() == "DE" && par2.toUpperCase() == "HL") {
                             s.bytes = 2;
                             s.lens = [0x54, 0x5d];
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "DE" &&
-                            par2.toUpperCase() == "BC"
-                        ) {
+                        if (par1.toUpperCase() == "DE" && par2.toUpperCase() == "BC") {
                             s.bytes = 2;
                             s.lens = [0x50, 0x59];
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "BC" &&
-                            par2.toUpperCase() == "HL"
-                        ) {
+                        if (par1.toUpperCase() == "BC" && par2.toUpperCase() == "HL") {
                             s.bytes = 2;
                             s.lens = [0x44, 0x4d];
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "BC" &&
-                            par2.toUpperCase() == "DE"
-                        ) {
+                        if (par1.toUpperCase() == "BC" && par2.toUpperCase() == "DE") {
                             s.bytes = 2;
                             s.lens = [0x42, 0x4b];
                             return s;
@@ -4382,27 +4128,17 @@ function Assembler() {
                             s.bytes = 1;
                             lens[0] = 0x40 + (reg1 << 3) + reg2;
                         }
-                        if (
-                            par1.toUpperCase() == "A" &&
-                            par2.toUpperCase() == "(BC)"
-                        ) {
+                        if (par1.toUpperCase() == "A" && par2.toUpperCase() == "(BC)") {
                             s.bytes = 1;
                             s.lens = [0x0a];
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "A" &&
-                            par2.toUpperCase() == "(DE)"
-                        ) {
+                        if (par1.toUpperCase() == "A" && par2.toUpperCase() == "(DE)") {
                             s.bytes = 1;
                             s.lens = [0x1a];
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "A" &&
-                            LINK(par2) &&
-                            s.bytes === 0
-                        ) {
+                        if (par1.toUpperCase() == "A" && LINK(par2) && s.bytes === 0) {
                             s.bytes = 3;
                             s.lens = [
                                 0x3a,
@@ -4413,27 +4149,17 @@ function Assembler() {
                             ];
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "(BC)" &&
-                            par2.toUpperCase() == "A"
-                        ) {
+                        if (par1.toUpperCase() == "(BC)" && par2.toUpperCase() == "A") {
                             s.bytes = 1;
                             s.lens = [0x02];
                             return s;
                         }
-                        if (
-                            par1.toUpperCase() == "(DE)" &&
-                            par2.toUpperCase() == "A"
-                        ) {
+                        if (par1.toUpperCase() == "(DE)" && par2.toUpperCase() == "A") {
                             s.bytes = 1;
                             s.lens = [0x12];
                             return s;
                         }
-                        if (
-                            LINK(par1) &&
-                            par2.toUpperCase() == "A" &&
-                            s.bytes === 0
-                        ) {
+                        if (LINK(par1) && par2.toUpperCase() == "A" && s.bytes === 0) {
                             s.bytes = 3;
                             s.lens = [
                                 0x32,
@@ -4550,8 +4276,7 @@ function Assembler() {
                                 lens[3] = lens[2];
                                 lens[2] = function (vars) {
                                     var d = Parser.evaluate(disp, vars);
-                                    if (d > 127 || d < -128)
-                                        throw "Index out of range (" + d + ")";
+                                    if (d > 127 || d < -128) throw "Index out of range (" + d + ")";
                                     return d;
                                 };
                                 s.bytes = 4;
@@ -4560,8 +4285,7 @@ function Assembler() {
                                 //lens[2] = Parser.evaluate(disp,vars);
                                 lens[2] = function (vars) {
                                     var d = Parser.evaluate(disp, vars);
-                                    if (d > 127 || d < -128)
-                                        throw "Index out of range (" + d + ")";
+                                    if (d > 127 || d < -128) throw "Index out of range (" + d + ")";
                                     return d;
                                 };
                                 s.bytes = 3;
@@ -4657,8 +4381,7 @@ function Assembler() {
                         //lens[2] = safeparse(disp);
                         lens[2] = (vars) => {
                             var d = Parser.evaluate(disp, vars);
-                            if (d > 127 || d < -128)
-                                throw "Index out of range (" + d + ")";
+                            if (d > 127 || d < -128) throw "Index out of range (" + d + ")";
                             return d;
                         };
                         bytes = 4;
@@ -4667,8 +4390,7 @@ function Assembler() {
                         //          lens[2] = safeparse(disp);
                         lens[2] = (vars) => {
                             var d = Parser.evaluate(disp, vars);
-                            if (d > 127 || d < -128)
-                                throw "Index out of range (" + d + ")";
+                            if (d > 127 || d < -128) throw "Index out of range (" + d + ")";
                             return d;
                         };
                         bytes = 3;
@@ -4701,12 +4423,7 @@ function Assembler() {
         simpleint = simpleint === undefined ? true : simpleint;
         let sgn = num < 0;
         let m = sgn ? -num : num;
-        if (
-            simpleint &&
-            num == Math.floor(num) &&
-            num >= -65535 &&
-            num <= 65535
-        ) {
+        if (simpleint && num == Math.floor(num) && num >= -65535 && num <= 65535) {
             m = sgn ? 65536 + num : num;
             return [0, sgn ? 0xff : 0, m & 0xff, (m >> 8) & 0xff, 0];
         }

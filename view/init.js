@@ -33,7 +33,6 @@ var zealcom = new Zeal8bitComputer();
 const assembler = new Assembler();
 const disassembler = new Disassembler();
 const popup = new Popup();
-const wdb = new WorkspaceDB();
 
 var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
     mode: "text/x-z80",
@@ -45,8 +44,10 @@ var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
     foldGutter: true,
     gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
     styleActiveLine: true,
-    autoRefresh:true,
-    extraKeys:{"Ctrl-Space":"autocomplete"}
+    autoRefresh: true,
+    extraKeys: { "Ctrl-Space" : "autocomplete" }
 });
 
 editor.refresh();
+
+const wfs = new WorkSpaceFileSystem();

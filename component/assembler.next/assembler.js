@@ -1,8 +1,5 @@
 function Assembler() {
-    async function _getFile(filename) {
-        let file = await wdb.selectFile(filename);
-        if (file.length > 0) return file[0].code;
-    }
+    var _getFile = (_filename) => wfs.select(_filename);
 
     function compile(mode, src, filename, asm80opts = undefined) {
         if (!src) {
@@ -12,7 +9,7 @@ function Assembler() {
             if (asm80opts) {
                 asm80obj = compileSrc(src, opts);
             } else {
-                asm80obj = compileSrc(src, { assembler: assembler.Z80 });
+                asm80obj = compileSrc(src, { assembler: assembler.Z80Instr });
             }
             switch (asm80obj[0]) {
                 case undefined:
@@ -65,13 +62,16 @@ function Assembler() {
             // parse source code into internal representation
             // let parsedSource = Parser.parse(source, opts);
             let parsedSource = parse(source, opts);
+            console.log(parsedSource);
 
             // pass 1: prepare instruction codes and try to evaluate expressions
             let metacode = pass1(parsedSource, null, opts);
+            console.log(metacode);
 
             // metacode is passed again and again until all expressions are evaluated
             for (let icnt = 0; icnt < 4; icnt++) {
                 metacode = pass1(metacode[0], metacode[1], opts);
+                console.log(metacode);
             }
             
             metacode[1]["__PRAGMAS"] = opts.PRAGMAS;
@@ -1445,7 +1445,16 @@ function Assembler() {
                     }
                 }
             }
-            return a;
+            // console.log(a.slice(ORGPC)[0]);
+            // console.log(a);
+            if (ORGPC) {
+                _PC = ORGPC[0];
+                ORGPC = [];
+                return a.slice(_PC);
+            }
+            else {
+                return a;
+            }
         },
 
         ///////////////////////////////////////////////////////////////////////
@@ -2132,7 +2141,7 @@ function Assembler() {
     /////////////////////////////////////////////////////////////////////
     // assembler file parser
     // gets a text file, returns an array of parsed lines
-    const parse = (s, opts) => {
+    function parse(s, opts) {
         // split and convert to internal lines
         let i = toInternal(s.split(/\n/));
         //remove empty lines
@@ -2154,6 +2163,8 @@ function Assembler() {
     ////////////////////////////////////////////////////////////////////
     // origin: https://github.com/asm80/asm80-core/blob/main/pass1.js //
     ////////////////////////////////////////////////////////////////////
+    var ORGPC = [];
+    
     const pass1 = (V, vxs, opts) => {
         if (!opts.xref) opts.xref = {};
         let segment = "CSEG";
@@ -2357,6 +2368,7 @@ function Assembler() {
                     PC = Parser.evaluate(op.params[0], vars);
                     op.addr = PC;
                     seg[segment] = PC;
+                    ORGPC.push(PC);
                     continue;
                 }
 
@@ -2890,13 +2902,13 @@ function Assembler() {
                     opts.ENGINE = op.params[0];
                     continue;
                 }
-                /*
-          if (op.opcode === ".PRAGMA") {
-            opts.PRAGMAS=opts.PRAGMAS || [];
-            opts.PRAGMAS.push(op.params[0].toUpperCase());
-            continue;
-          }
-          */
+                
+                // if (op.opcode === ".PRAGMA") {
+                //     opts.PRAGMAS=opts.PRAGMAS || [];
+                //     opts.PRAGMAS.push(op.params[0].toUpperCase());
+                //     continue;
+                // }
+          
                 if (op.opcode === "EQU") {
                     //console.log(op.label);
                     if (!op.label)
@@ -2907,11 +2919,13 @@ function Assembler() {
                     vars[op.label] = Parser.evaluate(op.params[0], vars);
                     continue;
                 }
+
                 if (op.opcode === ".SET" || op.opcode === ":=") {
                     //console.log(op.label, op.params[0], vars);
                     vars[op.label] = Parser.evaluate(op.params[0], vars);
                     continue;
                 }
+
                 if (op.opcode === "DB" || op.opcode === "FCB") {
                     bts = 0;
                     op.lens = [];
@@ -2930,6 +2944,7 @@ function Assembler() {
                     }
                     continue;
                 }
+
                 if (op.opcode === "FCC") {
                     bts = 0;
                     op.lens = [];
@@ -3146,12 +3161,11 @@ function Assembler() {
                     continue;
                 }
 
-                /*
-          if (op.opcode === "DS") {
-            console.log(op);
-          }
-    */
-                //Tady se děje magie s instrukcí
+                // if (op.opcode === "DS") {
+                //     console.log(op);
+                // }
+                
+                // Tady se děje magie s instrukcí
                 if (op.anonymousLabel) {
                     //console.log(op);
                     vars["ANON_PREV_2"] = ["ANON_PREV_1"];
@@ -3382,7 +3396,7 @@ function Assembler() {
             px,
             params = null;
         let macros = {};
-        //let macroPars = {};
+        // let macroPars = {};
         let macroDefine = null;
         let reptCount = null;
         let out = [];
@@ -3696,7 +3710,7 @@ function Assembler() {
     //////////////////////////////////////////////////////////////////////
     // origin: https://github.com/asm80/asm80-core/blob/main/cpu/z80.js //
     //////////////////////////////////////////////////////////////////////
-    const Z80 = {
+    const Z80Instr = {
         set: {
             // 0 nebo 1 parametr
             //         0     1     2       3      4      5     6       7      8      9     10    11     12    13
@@ -3899,8 +3913,8 @@ function Assembler() {
                 return [par, disp, prefix];
             };
 
-            var ax = Z80.set[s.opcode];
-            var ax2 = Z80.set2[s.opcode];
+            var ax = Z80Instr.set[s.opcode];
+            var ax2 = Z80Instr.set2[s.opcode];
             var op = -1,
                 bytes = 1,
                 lens = [];
@@ -4058,8 +4072,8 @@ function Assembler() {
                             //instr R16
                             op = ax[6];
                             if (op > 0) {
-                                if (Z80.R16[s.opcode]) {
-                                    op += reg << Z80.R16[s.opcode];
+                                if (Z80Instr.R16[s.opcode]) {
+                                    op += reg << Z80Instr.R16[s.opcode];
                                 } else {
                                     op += reg;
                                 }
@@ -4070,8 +4084,8 @@ function Assembler() {
                                 //instr R16
                                 op = ax[7];
                                 if (op > 0) {
-                                    if (Z80.R16[s.opcode]) {
-                                        op += reg << Z80.R16[s.opcode];
+                                    if (Z80Instr.R16[s.opcode]) {
+                                        op += reg << Z80Instr.R16[s.opcode];
                                     } else {
                                         op += reg;
                                     }
@@ -4083,8 +4097,8 @@ function Assembler() {
                                     op = ax[4];
                                     //console.log(par, op, reg, s)
                                     if (op > 0) {
-                                        if (Z80.R8[s.opcode]) {
-                                            op += reg << Z80.R8[s.opcode];
+                                        if (Z80Instr.R8[s.opcode]) {
+                                            op += reg << Z80Instr.R8[s.opcode];
                                         } else {
                                             op += reg;
                                         }
@@ -4153,7 +4167,7 @@ function Assembler() {
                         return null;
                     }
                     if (s.opcode == "CALL") {
-                        ax = Z80.set2.CAL2;
+                        ax = Z80Instr.set2.CAL2;
                         reg = COND(par1);
                         if (reg >= 0 && ax[5] > 0) {
                             op = ax[5];
@@ -4172,7 +4186,7 @@ function Assembler() {
                         return null;
                     }
                     if (s.opcode == "JP") {
-                        ax = Z80.set2.JP2;
+                        ax = Z80Instr.set2.JP2;
                         reg = COND(par1);
                         if (reg >= 0 && ax[5] > 0) {
                             op = ax[5];
@@ -4191,7 +4205,7 @@ function Assembler() {
                         return null;
                     }
                     if (s.opcode == "JR") {
-                        ax = Z80.set2.JR2;
+                        ax = Z80Instr.set2.JR2;
                         reg = COND(par1);
                         if (reg >= 0 && reg < 4 && ax[5] > 0) {
                             op = ax[5];
@@ -4788,6 +4802,6 @@ function Assembler() {
     const toHex8 = (n) => toHexN(n, 8);
 
     this.compile = compile;
-    this.Z80 = Z80;
+    this.Z80Instr = Z80Instr;
     this.returnAs = returnAs;
 }

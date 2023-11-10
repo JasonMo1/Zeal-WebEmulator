@@ -3,13 +3,13 @@ function openFile(_filename) {
         editor.latestfile = editor.thisfile;
         editor.thisfile = _filename;
         $("#filenametab").html(editor.thisfile);
-        editor.setValue(wfs.selectCode(_filename));
+        editor.setValue(wfs.select(_filename));
     }
 }
 
 function saveFile(_filename, _code) {
     file_blocking = true;
-    wfs.set(_filename, "file", _code);
+    wfs.set(_filename, _code);
     setFileView();
     popup.log("Saved " + _filename);
     file_blocking = false;
@@ -29,18 +29,18 @@ function downloadFile(_filename) {
     if (editor.thisfile === _filename) {
         downloadString(editor.thisfile, editor.getValue());
     } else {
-        downloadString(_filename, wfs.selectCode(_filename));
+        downloadString(_filename, wfs.select(_filename));
     }
     file_blocking = false;
 }
 
 function compileFile(_filename) {
-    assembler.compile(0, wfs.selectCode(_filename), _filename.split(".")[0]);
+    assembler.compile(0, wfs.select(_filename), _filename.split(".")[0]);
 }
 
 function loadFile(_filename) {
     file_blocking = true;
-    let bin = assembler.compile(3, wfs.selectCode(_filename), _filename.split(".")[0]);
+    let bin = assembler.compile(3, wfs.select(_filename), _filename.split(".")[0]);
     if (bin.length > 16384) {
         popup.error("Your binary is too big to load");
     } else {
@@ -79,7 +79,7 @@ $("#downasm").on("click", function () {
 });
 
 $("#savecode").on("click", function () {
-    let _filename = wfs.path.endsWith($("#progname").val(), ".asm") ?? editor.thisfile;
+    let _filename = $("#progname").val() ? endsWith($("#progname").val(), ".asm") : editor.thisfile;
     saveFile(_filename, editor.getValue());
     editor.thisfile = _filename;
     $("#filenametab").html(editor.thisfile);

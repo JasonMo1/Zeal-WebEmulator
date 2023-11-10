@@ -9,5 +9,5 @@ This file is fairly simple, it contains macros for all the syscalls available in
 The following line needs be added at the top of the assembly file using Zeal 8-bit OS syscalls:
 
 ```assembly
-    .INCLUDE "headers/zos/zos_sys.asm"
+    .INCLUDE "zos_sys.asm"
 ```

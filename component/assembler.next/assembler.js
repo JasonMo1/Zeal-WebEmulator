@@ -1,5 +1,5 @@
 function Assembler() {
-    var _getFile = (_this, _target, is_file) => wfs.selectCode(wfs.path.join(_this, _target, is_file));
+    var _getFile = (_filename) => wfs.select(_filename);
 
     function compile(mode, src, filename, asm80opts = undefined) {
         if (!src) {
@@ -7,9 +7,9 @@ function Assembler() {
             return;
         } else {
             if (asm80opts) {
-                asm80obj = compileSrc(src, opts, filename);
+                asm80obj = compileSrc(src, opts);
             } else {
-                asm80obj = compileSrc(src, { assembler: Z80Instr }, filename);
+                asm80obj = compileSrc(src, { assembler: Z80Instr });
             }
             switch (asm80obj[0]) {
                 case undefined:
@@ -38,7 +38,7 @@ function Assembler() {
     //////////////////////////////////////////////////////////////////
     // origin: https://github.com/asm80/asm80-core/blob/main/asm.js //
     //////////////////////////////////////////////////////////////////
-    const compileSrc = (source, opts = { assembler: null }, _filename) => {
+    const compileSrc = (source, opts = { assembler: null }) => {
         opts = {
             ...opts,
             fileGet: _getFile,
@@ -56,17 +56,14 @@ function Assembler() {
         try {
             // parse source code into internal representation
             // let parsedSource = Parser.parse(source, opts);
-            let parsedSource = parse(source, opts, _filename);
-            console.log(parsedSource);
+            let parsedSource = parse(source, opts);
 
             // pass 1: prepare instruction codes and try to evaluate expressions
-            let metacode = pass1(parsedSource, null, opts, _filename);
-            console.log(metacode);
+            let metacode = pass1(parsedSource, null, opts);
 
             // metacode is passed again and again until all expressions are evaluated
             for (let icnt = 0; icnt < 4; icnt++) {
-                metacode = pass1(metacode[0], metacode[1], opts, _filename);
-                console.log(metacode);
+                metacode = pass1(metacode[0], metacode[1], opts);
             }
 
             metacode[1]["__PRAGMAS"] = opts.PRAGMAS;
@@ -75,7 +72,6 @@ function Assembler() {
             //        (this pass is not repeated)
             // It should be all resolved aftrer the 2nd pass
             metacode = pass2(metacode, opts);
-            console.log(metacode);
 
             return [null, metacode, opts.xref];
         } catch (e) {
@@ -1384,7 +1380,7 @@ function Assembler() {
             });
         },
 
-        beautify: function (s, opts, filename) {
+        beautify: function (s, opts) {
             let i = toInternal(s.split(/\n/));
             i = emptymask(i);
             i = nonempty(i);
@@ -1394,8 +1390,7 @@ function Assembler() {
                 {
                     noinclude: true,
                     ...opts,
-                },
-                (filename = filename),
+                }
             );
             i = i.map((line) => {
                 //console.log(line);
@@ -2008,7 +2003,7 @@ function Assembler() {
     /////////////////////////////////////////////////////////////////////
     // assembler file parser
     // gets a text file, returns an array of parsed lines
-    function parse(s, opts, _filename) {
+    function parse(s, opts) {
         // split and convert to internal lines
         let i = toInternal(s.split(/\n/));
         //remove empty lines
@@ -2018,7 +2013,7 @@ function Assembler() {
 
         //macro processing and expansion
 
-        let prei = prepro(i, opts, null, _filename);
+        let prei = prepro(i, opts);
         //console.log(prei)
         i = prei[0].map((line) => parseLine(line, prei[1], opts));
         i = unroll(i, prei[1], null, opts);
@@ -2032,7 +2027,7 @@ function Assembler() {
     ////////////////////////////////////////////////////////////////////
     var ORGPC = [];
 
-    const pass1 = (V, vxs, opts, filename) => {
+    const pass1 = (V, vxs, opts) => {
         if (!opts.xref) opts.xref = {};
         let segment = "CSEG";
         let segallow = () => {
@@ -2510,7 +2505,7 @@ function Assembler() {
                         s: op,
                     };
                 //console.log("Include "+params[0]);
-                let nf = opts.fileGet(filename, op.params[0], true);
+                let nf = opts.fileGet(op.params[0]);
                 if (!nf)
                     throw {
                         msg: "Cannot find file " + op.params[0] + " for incbin",
@@ -3221,7 +3216,7 @@ function Assembler() {
         };
     };
 
-    const prepro = (V, opts = {}, fullfile, filename) => {
+    const prepro = (V, opts = {}, fullfile) => {
         if (!opts.includedFiles) opts.includedFiles = {};
         let op,
             ln,
@@ -3303,7 +3298,7 @@ function Assembler() {
                 } else {
                     //if (includedFiles[params[0].replace(/\"/g,"")]) throw {"msg":"File "+params[0].replace(/\"/g,"")+" is already included elsewhere - maybe recursion","s":V[i]};
                     //console.log("Include "+params[0]);
-                    nf = opts.fileGet(filename, params[0].replace(/\"/g, ""), true);
+                    nf = opts.fileGet(params[0].replace(/\"/g, ""));
                     if (!nf)
                         throw {
                             msg: "File " + params[0] + " not found",
@@ -3319,7 +3314,7 @@ function Assembler() {
                 }
 
                 //console.log(ni)
-                let preni = prepro(ni, {}, fullni, nf);
+                let preni = prepro(ni, {}, fullni);
                 for (let k = 0; k < preni[0].length; k++) {
                     preni[0][k].includedFile = params[0].replace(/\"/g, "");
                     preni[0][k].includedFileAtLine = V[i].numline;

@@ -73,8 +73,14 @@ function downloadBinary(_filename="Zeal-WebEmulator-File.txt", _binary) {
 }
 
 function downloadString(_filename="Zeal-WebEmulator-File.txt", _str) {
-    for (var r = "", n = 0; n < _str.length; n++) {
-        r += "%" + _str.charCodeAt(n).toString(16);
+    download(_filename, _str);
+}
+
+function endsWith(_src, _ends_with) {
+    if (_src != "") {
+        if (!_src.endsWith(_ends_with)) {
+            _src += _ends_with;
+        }
     }
-    download(_filename, r);
+    return _src;
 }

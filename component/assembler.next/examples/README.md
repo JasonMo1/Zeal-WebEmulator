@@ -6,14 +6,14 @@ Here are the examples of the assembler. You can use
 await wfs._generateFile();
 ```
 
-to generate the filesto your editor for debugging.
+to generate these files to your editor for debugging.
 
 ## Manifest and introduction
 
 | Name        | Label(s) | Macro(s) | Included file(s) |
 | ----------- | -------- | -------- | ---------------- |
-| compile.asm | [⨯]      | [⨯]      | [⨯]              |
-| print_a.asm | [⨯]      | [⨯]      | [⨯]              |
-| print_b.asm | [✓]      | [⨯]      | [⨯]              |
-| print_c.asm | [✓]      | [✓]      | [⨯]              |
-| print_d.asm | [✓]      | [⨯]      | [✓]              |
+| compile.asm | [⨯]     | [⨯]     | [⨯]             |
+| print_a.asm | [⨯]     | [⨯]     | [⨯]             |
+| print_b.asm | [✓]     | [⨯]     | [⨯]             |
+| print_c.asm | [✓]     | [✓]     | [⨯]             |
+| print_d.asm | [✓]     | [⨯]     | [✓]             |

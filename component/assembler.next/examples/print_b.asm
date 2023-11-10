@@ -1,4 +1,4 @@
-; SPDX-FileCopyrightText: 2023 JasonMo <jasonmo2009@hotmail.com>
+; SPDX-FileCopyrightText: 2023 Zeal 8-bit Computer <contact@zeal8bit.com>
 ; SPDX-License-Identifier: Apache-2.0
 
 ; Easiest Z80 assembly example

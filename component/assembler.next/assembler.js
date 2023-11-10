@@ -1,5 +1,5 @@
 function Assembler() {
-    var _getFile = (_this, _target, is_file) => wfs.select(wfs.path.join(_this, _target, is_file));
+    var _getFile = (_this, _target, is_file) => wfs.selectCode(wfs.path.join(_this, _target, is_file));
 
     function compile(mode, src, filename, asm80opts = undefined) {
         if (!src) {
@@ -78,7 +78,6 @@ function Assembler() {
             console.log(metacode);
 
             return [null, metacode, opts.xref];
-            
         } catch (e) {
             // Some error occured
             let s = e.s || "Internal error";

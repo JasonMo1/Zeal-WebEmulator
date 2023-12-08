@@ -4,8 +4,11 @@
     <a href="https://opensource.org/licenses/Apache-2.0">
         <img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="Licence" />
     </a>
+    <a href="https://www.youtube.com/@Zeal8bit">
+        <img alt="Youtube channel" src="https://img.shields.io/youtube/channel/subscribers/UCSsNHOUIZXsySWGb70BrU2A?style=flat&logo=youtube&label=Youtube&labelColor=ff0000&color=282c34"/>
+    </a>
     <a href="https://space.bilibili.com/1042658991?spm_id_from=333.337.0.0">
-        <img alt="bilibili" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.swo.moe%2Fstats%2Fbilibili%2F1042658991&query=count&color=282c34&label=bilibili&labelColor=FE7398&logo=bilibili&logoColor=white&logoSvg=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB2aWV3Qm94PSIwIDAgNTIgNTIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI%2BPHBhdGggZD0iTTEuMzczNTIgMTcuMzUzMjJIOC4xMzUzMjNMMTcuMzUzMjIgMTYuNzUzMjF6IE0yLjEzNTMyIDMuMDAwMDJMMi4xMzUzMjIgMy4wMDAwMnoiLz48L3N2Zz4%3D)"/>
+        <img alt="bilibili channel" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.swo.moe%2Fstats%2Fbilibili%2F1042658991&query=count&color=282c34&label=bilibili&labelColor=FE7398&logo=bilibili&logoColor=white&logoSvg=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB2aWV3Qm94PSIwIDAgNTIgNTIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI%2BPHBhdGggZD0iTTEuMzczNTIgMTcuMzUzMjJIOC4xMzUzMjNMMTcuMzUzMjIgMTYuNzUzMjF6IE0yLjEzNTMyIDMuMDAwMDJMMi4xMzUzMjIgMy4wMDAwMnoiLz48L3N2Zz4%3D)"/>
     </a>
 </p>
 
@@ -147,8 +150,11 @@ yarn dist-win64
 
 ¹：优先级**较低**的功能，因为它们尚未在实际硬件上实现。
 
-* 调试器按钮的更好界面，带有一些快捷方式
-* 解析断点输入的更好方法。一个已知的错误是，提供以十六进制字母开头的标签将被解释为 PC 值而不是标签。例如，输入 *date_routine* 作为要中断的标签将导致在地址 0xda 处添加断点，而不是标签 *date_routine* 的地址（因为 *date* 以十六进制字母 *da* 开头）
+* [ ] 调试器按钮的更好**界面**，带有一些快捷方式
+* [ ] 解析**断点**输入的更好方法。一个已知的错误是，提供以十六进制字母开头的标签将被解释为 PC 值而不是标签。例如，输入 *date_routine* 作为要中断的标签将导致在地址 0xda 处添加断点，而不是标签 *date_routine* 的地址（因为 *date* 以十六进制字母 *da* 开头）
+* [X] **重构**。代码的某些部分，主要是在`zeal.js`中有点混乱，因为这个文件管理了几个不同的东西：断点、反汇编视图、内存查看器、Zeal 仿真等......它应该被清理并在多个文件之间拆分
+* [X] 一个**反汇编器**！现在，反汇编器视图仅从`z88dk-dis`工具链生成的文件中获取反汇编。一种更好的方法是即时反汇编cpu指令，并在屏幕底部的*拆卸*视图中显示它们
+* [X] 带有汇编程序的**集成代码编辑器**！在将来，集成代码编辑器（理想情况下是 *CodeMirror*）将是一个非常好的补充。它允许任何人编写代码，组装它，将其注入模拟器并直接测试。无需安装工具链或汇编程序，一切都可以直接从浏览器获得。还可以将调试器连接到代码编辑器，以便能够更轻松地调试编写的代码
 
 ## 👬为项目做出贡献
 

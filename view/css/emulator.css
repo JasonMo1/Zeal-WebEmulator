@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+@font-face {
+	font-family:'cascadiacode';
+	src: url('../fonts/CascadiaCode.ttf');
+}
+
 :root, :root.dark {
     --first-bg-color: #002b36;
     --second-bg-color: #093642;
@@ -123,6 +128,14 @@ hr {
     background-color: black;
 }
 
+#input-container {
+    display: block;
+    position: absolute;
+    z-index: -1;
+    left: -12px;
+    top: 0px;
+}
+
 #rightpanel {
     background-color:var(--second-bg-color);
     color: var(--first-txt-color);
@@ -133,6 +146,10 @@ hr {
     border-bottom-right-radius: 10px;
     border-bottom-left-radius: 10px;
     padding-bottom: 1em;
+}
+
+#romchoice {
+    max-width: 15em;
 }
 
 #romchoice {
@@ -277,6 +294,24 @@ hr {
     user-select: none;
 }
 
+#codeedit {
+    position: relative;
+    z-index: 3;
+    border-top: 2px black solid;
+    font-family: 'cascadiacode';
+    font-size: 11pt;
+    display: inline-block;
+    width: 100%;
+    height: 56vh;
+    background-color:var(--second-bg-color);
+    padding-top: 1em;
+    padding-left: 0.5em;
+    cursor: pointer;
+    overflow-y:scroll;
+    box-sizing: border-box;
+    user-select: none;
+}
+
 #dumpfields {
     margin-bottom: 1em;
 }
@@ -336,6 +371,29 @@ hr {
     background-color: var(--third-bg-color);
 }
 
+#code-files {
+    height: 150px;
+    width: 175px;
+    float: left;
+    font-family: 'cascadiacode';
+}
+
+.files div:hover {
+    background-color: var(--first-txt-color);
+    color: var(--fourth-bg-color);
+}
+
+#filenametab {
+    border: 0.5em solid var(--third-bg-color);
+    background-color: var(--first-txt-color);
+    color: var(--fourth-bg-color);
+    height: 1em;
+    width: 17.5em;
+    display: inline-block;
+    margin-right: 1px;
+    border-radius: 5px;
+    font-family: 'cascadiacode';
+}
 
 h3 {
     margin-left: 0.5em;
@@ -454,8 +512,21 @@ button {
 
 .poperror {
     color:#6d0000;
+    color:#6d0000;
     background:#ffecec;
     border: 1px solid #fc695d;
+}
+
+.popwarn {
+    color: #e19032;
+    background: #eee8d5;
+    border: 1px solid #ffca38;
+}
+
+.poplog {
+    color: #074670;
+    background: #699de1;
+    border: 1px solid #0071bf;
 }
 
 .popwarn {

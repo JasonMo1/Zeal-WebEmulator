@@ -30,5 +30,24 @@ document.addEventListener('keydown', function(event) {
 
 // Init Emulated hardware
 var zealcom = new Zeal8bitComputer();
+const assembler = new Assembler();
 const disassembler = new Disassembler();
-const popout = new Popup();
+const popup = new Popup();
+
+var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+    mode: "text/x-z80",
+    mode: "text/x-csrc",
+    matchBrackets: true,
+    lineNumbers: true,
+    theme: "darcula",
+    lineWrapping: true,
+    foldGutter: true,
+    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+    styleActiveLine: true,
+    autoRefresh: true,
+    extraKeys: { "Ctrl-Space" : "autocomplete" }
+});
+
+editor.refresh();
+
+const wfs = new WorkSpaceFileSystem();

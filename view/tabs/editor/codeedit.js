@@ -1,5 +1,5 @@
 function openFile(_filename) {
-    if (file_blocking === false) {
+    if (onblock === false) {
         editor.latestfile = editor.thisfile;
         editor.thisfile = _filename;
         $("#filenametab").html(editor.thisfile);
@@ -8,30 +8,38 @@ function openFile(_filename) {
 }
 
 function saveFile(_filename, _code) {
-    file_blocking = true;
-    wfs.set(_filename, "file", _code);
-    setFileView();
-    popup.log("Saved " + _filename);
-    file_blocking = false;
+    onblock = true;
+    if (_filename === "") {
+        popup.error("No filename inputted");
+    }
+    else if (!wfs.path.avilable(_filename)) {
+        popup.error("Unavilable filename");
+    }
+    else {
+        wfs.set(_filename, { name: _filename, volume: _code, last_modified: new Date(), created: new Date() });
+        setFileView();
+        popup.log("Saved " + _filename);
+    }
+    onblock = false;
 }
 
 function deleteFile(_filename) {
-    file_blocking = true;
+    onblock = true;
     editor.thisfile = null;
     wfs.remove(_filename);
     popup.log("Deleted " + _filename);
     setFileView();
-    file_blocking = false;
+    onblock = false;
 }
 
 function downloadFile(_filename) {
-    file_blocking = true;
+    onblock = true;
     if (editor.thisfile === _filename) {
         downloadString(editor.thisfile, editor.getValue());
     } else {
         downloadString(_filename, wfs.selectCode(_filename));
     }
-    file_blocking = false;
+    onblock = false;
 }
 
 function compileFile(_filename) {
@@ -39,7 +47,7 @@ function compileFile(_filename) {
 }
 
 function loadFile(_filename) {
-    file_blocking = true;
+    onblock = true;
     let bin = assembler.compile(3, wfs.selectCode(_filename), _filename.split(".")[0]);
     if (bin.length > 16384) {
         popup.error("Your binary is too big to load");
@@ -50,11 +58,11 @@ function loadFile(_filename) {
             zealcom.uart.send_binary_array(bin);
         }, 10);
     }
-    file_blocking = false;
+    onblock = false;
 }
 
 function setFileView() {
-    file_blocking = false;
+    onblock = false;
     let files = wfs.selectAllFileName();
     let result = "";
     result += '<section class="files">';

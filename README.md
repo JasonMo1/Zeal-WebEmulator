@@ -91,25 +91,25 @@ Supported arch:
 npm:
 
 ```bash
-npm run dist-<arch>
+npm run dist:<arch>
 ```
 
 yarn:
 
 ```bash
-yarn dist-<arch>
+yarn dist:<arch>
 ```
 
 for example, if you want to build for windows-x64, run following commands:
 
 ```bash
-npm run dist-win64
+npm run dist:win64
 ```
 
 or:
 
 ```bash
-yarn dist-win64
+yarn dist:win64
 ```
 
 ## Supported Features

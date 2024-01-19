@@ -4,6 +4,7 @@ node_modules
 # Package manager files:
 yarn-error.log
 *.lock
+*.lockb
 
 # User publish:
 out

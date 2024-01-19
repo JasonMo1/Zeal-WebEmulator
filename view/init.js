@@ -5,6 +5,7 @@
  */
 
 // Init window
+initTheme();
 const left_panel_height = $("#debug").height();
 $("#rightpanel").css('min-height', left_panel_height);
 

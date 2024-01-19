@@ -13,11 +13,11 @@
     "pack": "electron-builder --dir",
     "postinstall": "electron-builder install-app-deps",
     "dist": "electron-builder",
-    "dist-win": "electron-builder --win --ia32",
-    "dist-win64": "electron-builder --win --x64",
-    "dist-mac": "electron-builder --mac",
-    "dist-linux": "electron-builder --linux",
-    "dbg": "live-server ./ --port=1145"
+    "dist:win": "electron-builder --win --ia32",
+    "dist:win64": "electron-builder --win --x64",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux",
+    "dev": "live-server ./ --port=1145"
   },
   "keywords": [],
   "author": {
@@ -37,8 +37,7 @@
     "@electron-forge/maker-zip": "^7.1.0",
     "@electron-forge/plugin-auto-unpack-natives": "^7.1.0",
     "electron": "^27.1.2",
-    "electron-builder": "^24.9.1",
-    "electron-squirrel-startup": "^1.0.0"
+    "electron-builder": "^24.9.1"
   },
   "build": {
     "appId": "com.zealwebemulator",

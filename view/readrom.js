@@ -88,11 +88,6 @@ function switchToAdvancedMode(error) {
  */
 
 const prebuilt_json_url = "https://zeal8bit.com/roms/index.json";
-
-/*
-    Only for debug, I don't hold all of the copyright of the
-    prebuild images in this index and I'm not sure they are safe     --Jason
-*/
 // const prebuilt_json_url = "https://jasonmo1.github.io/ZOS-Index-demo/index.json"
 
 /* Process the index JSON object that contains all the ROMs available */
@@ -138,6 +133,7 @@ function resetRom() {
 
 var rom_chosen = false;
 var index_src;
+var use_hash_compare = false;
 /**
  * Add a listener to the romchoice list, load the ROM when selected
  */
@@ -167,7 +163,7 @@ $("#romchoice").on("change", async function() {
 
     try {
         let data = await readBlobFromUrl(url);
-        let hashcomp = await filehash(data, hash);
+        let hashcomp = use_hash_compare ? await filehash(data, hash) : true;
         if (hashcomp == true) {
             load_bin(data);
         }

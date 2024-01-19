@@ -1,13 +1,5 @@
 function WorkSpaceFileSystem() {
-    function polyfill() {
-        Storage.prototype.setObj = function (key, value) {
-            this.setItem(key, JSON.stringify(value));
-        };
-
-        Storage.prototype.getObj = function (key) {
-            return JSON.parse(this.getItem(key));
-        };
-    }
+    const isPrivate = (filename) => filename.startsWith('[private]');
 
     function select(_name) {
         return localStorage.getObj(path.getFullName(_name));
@@ -15,19 +7,26 @@ function WorkSpaceFileSystem() {
 
     function set(key, value) {
         localStorage.setObj(path.getFullName(key), value);
+        console.log(path.getFullName(key));
     }
 
     function selectAllFileName() {
         let files = [];
         for (let i = 0; i < localStorage.length; i++) {
-            files.push(localStorage.key(i));
+            let f = localStorage.key(i);
+            if (!isPrivate(f)) {
+                files.push(f);
+            }
         }
         return files;
     }
 
     function _displayAll() {
         for (let i = 0; i < localStorage.length; i++) {
-            console.log(localStorage.getObj(localStorage.key(i)));
+            let name = localStorage.key(i);
+            if (!isPrivate(name)) {
+                console.log(localStorage.getObj(name));
+            }
         }
     }
 
@@ -42,8 +41,8 @@ function WorkSpaceFileSystem() {
             { name: `/examples/print_c.asm`, url: `${local_example_dir}/print_c.asm` },
             { name: `/examples/print_d.asm`, url: `${local_example_dir}/print_d.asm` },
             // Zeal-8-bit-OS Headers
-            { name: `/include/zos/zos_sys.asm`, url: `${local_include_dir}/zos_sys.asm` },
-            { name: `/include/zos/README.md`, url: `${local_include_dir}/README.md` },
+            { name: `/include/zos/zos_sys.asm`, url: `${local_include_dir}/zos/zos_sys.asm` },
+            { name: `/include/zos/README.md`, url: `${local_include_dir}/zos/README.md` },
         ];
         for (let i in urls) {
             let _volume = await fetch(urls[i].url)
@@ -113,9 +112,22 @@ function WorkSpaceFileSystem() {
                 }
             }
         },
+
+        avilable: function (_src) {
+            _src = _src.split("/");
+            let res = true;
+            let regex = /^[a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)?$/;
+            _src.forEach((element) => {
+                res = res && regex.test(element);
+            });
+            if (localStorage.getObj(this.getFullName(_src.join("/")))) {
+                res = false;
+            }
+            console.log(res);
+            return res;
+        }
     };
 
-    polyfill();
     this.select = select;
     this.selectCode = (_name) => select(_name).volume;
     this.set = set;

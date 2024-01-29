@@ -2,36 +2,25 @@ function Assembler() {
     var _getFile = (_this, _target, is_file) => wfs.selectCode(wfs.path.join(_this, _target, is_file));
 
     function compile(mode, src, filename, asm80opts = undefined) {
-        if (!src) {
-            popup.warn("Please save your program before assemble");
-            return;
-        } else {
-            if (asm80opts) {
-                asm80obj = compileSrc(src, opts, filename);
-            } else {
-                asm80obj = compileSrc(src, { assembler: Z80Instr }, filename);
+        let asm80obj = asm80opts ? compileSrc(src, opts, filename) : compileSrc(src, { assembler: Z80Instr }, filename);
+        if (asm80obj[0] === undefined) {
+            popup.error("Internal error - " + asm80obj[0]);
+        } 
+        else if (asm80obj[0] === null) {
+            let opcodes = asm80obj[1];
+            if (mode === 0) {
+                downloadBinary(filename + ".bin", returnAs.bin(opcodes[0]));
+            } 
+            else if (mode === 3) {
+                return returnAs.bin(opcodes[0]);
+            } 
+            else if (mode === "debug") {
+                console.log(opcodes);
             }
-            switch (asm80obj[0]) {
-                case undefined:
-                    popup.error("Internal error - " + asm80obj[0]);
-                    break;
-                case null:
-                    var opcodes = asm80obj[1];
-                    switch (mode) {
-                        case 0:
-                            downloadBinary(filename + ".bin", returnAs.bin(opcodes[0]));
-                            break;
-                        case 3:
-                            return returnAs.bin(opcodes[0]);
-                        case "debug":
-                            console.log(opcodes);
-                            break;
-                    }
-                    break;
-                default:
-                    popup.error(asm80obj[0].msg + "\nLine: " + asm80obj[0].s.numline);
-                    console.error(asm80obj);
-            }
+        } 
+        else {
+            popup.error(asm80obj[0].msg + "\nLine: " + asm80obj[0].s.numline);
+            console.error(asm80obj);
         }
     }
 
@@ -55,7 +44,6 @@ function Assembler() {
         };
         try {
             // parse source code into internal representation
-            // let parsedSource = Parser.parse(source, opts);
             let parsedSource = parse(source, opts, _filename);
             console.log(parsedSource);
 

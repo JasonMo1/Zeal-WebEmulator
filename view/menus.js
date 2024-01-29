@@ -4,15 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/* Memdump related */
-const byte_per_line = 0x20;
+$("#step").on("click",     () => zealcom.step());
+$("#stop").on("click",     () => zealcom.stop());
+$("#stepover").on("click", () => zealcom.step_over());
+$("#continue").on("click", () => zealcom.cont());
+$("#reset").on("click",    () => zealcom.reset());
+$("#clean").on("click",    () => {
+    zealcom.restart();
+    resetRom();
+});
 
 /**
  * Events for all menus and their content: breakpoints, CPU control, etc...
  */
- const right_arrow_src = "imgs/right-arrow.png";
- const down_arrow_src = "imgs/down-arrow.png";
-
+const right_arrow_src = "imgs/right-arrow.png";
+const down_arrow_src = "imgs/down-arrow.png";
 
 $(".menutitle").click(function() {
     /* Check if the content is shown or hidden */
@@ -28,7 +34,15 @@ $(".menutitle").click(function() {
     content.toggle(500);
 });
 
-$("#theme").on("change", function() {
+// Settings menu
+function initTheme() {
+    let t = getSettings().theme;
+    $(":root").addClass(t);
+    $(`#theme option[value=${t}]`).attr('selected', 'selected');
+}
+
+$("#theme").on("change", function() {    
     $(":root").removeClass();
     $(":root").addClass($(this).val());
+    setSettings("theme", $(this).val());
 })

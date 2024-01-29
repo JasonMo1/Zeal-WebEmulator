@@ -91,25 +91,25 @@ Supported arch:
 npm:
 
 ```bash
-npm run dist-<arch>
+npm run dist:<arch>
 ```
 
 yarn:
 
 ```bash
-yarn dist-<arch>
+yarn dist:<arch>
 ```
 
 for example, if you want to build for windows-x64, run following commands:
 
 ```bash
-npm run dist-win64
+npm run dist:win64
 ```
 
 or:
 
 ```bash
-yarn dist-win64
+yarn dist:win64
 ```
 
 ## Supported Features
@@ -196,11 +196,6 @@ All the other files are distributed under the Apache 2.0 License. See `LICENSE` 
 You are free to use it for personal and commercial use, the boilerplate present in each file must not be removed.
 
 ## Contact
-
-<!--
-    DO NOT MODIFY IT
-    discussion: https://github.com/Zeal8bit/Zeal-WebEmulator/pull/11#discussion_r1326039822
--->
 
 For any suggestion or request, you can contact me at `contact [at] zeal8bit [dot] com`
 

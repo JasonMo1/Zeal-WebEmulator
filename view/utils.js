@@ -78,3 +78,20 @@ function downloadString(_filename="Zeal-WebEmulator-File.txt", _str) {
     }
     download(_filename, r);
 }
+
+function getSettings() {
+    if (!localStorage.getObj("[private]settings")) {
+        let default_set = {
+            "theme": "dark",
+            "use_hash_compare": true
+        };
+        localStorage.setObj("[private]settings", default_set);
+    }
+    return localStorage.getObj("[private]settings");
+}
+
+function setSettings(key, value) {
+    let setttings = getSettings();
+    setttings[key] = value;
+    localStorage.setObj("[private]settings", setttings);
+}

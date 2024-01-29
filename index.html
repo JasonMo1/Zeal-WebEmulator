@@ -14,12 +14,11 @@
     <!-- Emulator's stylesheet -->
     <link rel="stylesheet" type="text/css" href="view/css/emulator.css" media="screen" />
     <link rel="stylesheet" type="text/css" href="view/css/interface.css" media="screen" />
+    <!-- Polyfill -->
+    <script src="view/polyfill.js"></script>
     <!-- jQuery -->
     <script src="component/jquery/jquery-3.6.0.min.js"></script>
     <script src="component/jquery/extend.js"></script>
-    <!-- JsStore -->
-    <script src="component/jsstore/jsstore.min.js"></script>
-    <script src="component/jsstore/jsstore.worker.min.js"></script>
     <!-- Xterm -->
     <script src="component/xterm/xterm.js"></script>
     <link rel="stylesheet" href="component/xterm/xterm.css" />
@@ -85,6 +84,7 @@
         </ul>
         <p>For more details about the contributors, <a href="https://github.com/Zeal8bit/Zeal-WebEmulator/graphs/contributors">follow this link</a>.</p>
     </section>
+    
     <section class="popup" id="help-message" markdown="1">
         <h2>Getting started with the emulator</h2>
         <p>The interface of Zeal 8-bit Computer emulator is rich in tools. They make it possible to simulate almost every part of the actual computer.</p>
@@ -293,7 +293,7 @@
             <section class="menucontent" style="display: none;">
                 <label for="theme">Switch theme:</label>
                 <select id="theme" name="theme">
-                    <option value="dark" selected>Dark (Default)</option>
+                    <option value="dark">Dark (Default)</option>
                     <option value="light">Light</option>
                 </select>
             </section>
@@ -405,10 +405,16 @@
     <script src="view/breakpoint.js"></script>
     <script src="view/menus.js"></script>
     <script src="view/screen.js"></script>
-    <script src="view/panel.js"></script>
+    <script src="view/regs_panel.js"></script>
     <script src="view/readrom.js"></script>
-    <script src="view/editor/workspace_fs.js"></script>
-    <script src="view/editor/codeedit.js"></script>
+    <!-- Tabs -->
+    <script src="view/tabs/tabs.js"></script>
+    <script src="view/tabs/disassemble.js"></script>
+    <script src="view/tabs/memdump.js"></script>
+    <script src="view/tabs/uart_terminal.js"></script>
+    <script src="view/tabs/editor/workspace_fs.js"></script>
+    <script src="view/tabs/editor/codeedit.js"></script>
+    <!-- Initalize -->
     <script src="view/init.js"></script>
   </body>
 </html>

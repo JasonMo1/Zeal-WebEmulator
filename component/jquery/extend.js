@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-jQuery.fn.visible = function () {
-    return this.css("visibility", "visible");
+jQuery.fn.visible = function() {
+    return this.css('visibility', 'visible');
 };
 
-jQuery.fn.invisible = function () {
-    return this.css("visibility", "hidden");
+jQuery.fn.invisible = function() {
+    return this.css('visibility', 'hidden');
 };

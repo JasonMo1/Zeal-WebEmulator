@@ -25,7 +25,7 @@ function Popup() {
         }, 3000);
     }
 
-    function doc(target) {
+    function dialog(target) {
         if (!target) {
             error("Error while showing HTML");
         }
@@ -38,7 +38,7 @@ function Popup() {
     this.warn  = (data)   => msg(data, "warn", "popwarn");
     this.info  = (data)   => msg(data, "log", "poplog");
     this.log   = (data)   => msg(data, "log", "poplog");
-    this.doc   = (target) => doc(target);
+    this.dialog   = (target) => dialog(target);
 }
 
 $("#blackbg").click(function() {
@@ -51,5 +51,5 @@ $("#blackbg").click(function() {
  */
 $("footer a").on("click", function(){
     const target = $(this).data("target");
-    popup.doc(target);
+    popup.dialog(target);
 });

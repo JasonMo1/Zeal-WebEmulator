@@ -66,12 +66,21 @@ class Zeal8bitComputer extends Z80Machine {
         this.vchip.renderScreen();
     }
 
-
     reset() {
         this.vchip.clear();
         super.reset();
     }
 
+    restart(resetinterval=true) {
+        this.running = false;
+        this.vchip.clear();
+        terminal.clear();
+        zealcom = new Zeal8bitComputer();
+        if (resetinterval == true) {
+            clearInterval(this.interval);
+            this.interval = null;
+        }
+    }
 
     KeyboardKeyPressed(keycode) {
         return this.keyboard.key_pressed(keycode);

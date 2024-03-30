@@ -434,17 +434,6 @@ class Z80Machine {
             running = false;
         }
 
-        function restart(resetinterval=true) {
-            running = false;
-            vchip.clear();
-            terminal.clear();
-            zealcom = new Zeal8bitComputer();
-            if (resetinterval == true) {
-                clearInterval(interval);
-                interval = null;
-            }
-        }
-
         function interrupt(interrupt_vector) {
             zpu.interrupt(false, interrupt_vector);
             step_cpu();
@@ -467,7 +456,6 @@ class Z80Machine {
         this.step_over = step_over;
         this.cont = cont;
         this.stop = stop;
-        this.restart = restart;
         this.interrupt = interrupt;
         this.destroy = destroy;
     }
